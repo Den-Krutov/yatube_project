@@ -9,4 +9,5 @@ def index(request):
 
 
 def group_posts(request, slug_str):
-    return HttpResponse(f'Posts group {slug_str}')
+    template = 'posts/group_list.html'
+    return HttpResponse(render(request, template))
