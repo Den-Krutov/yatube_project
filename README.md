@@ -1,3 +1,18 @@
-# backend_community_homework
-
-[![CI](https://github.com/yandex-praktikum/hw02_community/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw02_community/actions/workflows/python-app.yml)
+# Социальная сеть блогеров
+### Описание
+Благодаря этому проекту можно будет разным блогерам общаться друг с другом по сети.
+### Технологии
+Python 3.9
+Django 2.2.19
+### Запуск проекта в dev-режиме
+- Установите и активируйте виртуальное окружение
+- Установите зависимости из файла requirements.txt
+```
+pip install -r requirements.txt
+```
+- В папке с файлом manage.py выполните команду:
+```
+python3 manage.py runserver
+```
+### Авторы
+Даниил, email: nniiyu@yandex.ru
