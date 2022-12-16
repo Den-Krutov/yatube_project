@@ -1,23 +1,23 @@
-from django.shortcuts import render, get_object_or_404
-from .models import Post, Group
+from django.shortcuts import get_object_or_404, render
+
+from .models import Group, Post
+
+COUNT_POSTS_PAGE: int = 10
 
 
-# Create your views here.
 def index(request):
     template = 'posts/index.html'
-    posts = Post.objects.order_by('-pub_date')[:10]
+    posts = Post.objects.all()[:COUNT_POSTS_PAGE]
     context = {
-        'title': 'Последние обновления на сайте',
-        'text': 'Это главная страница проекта Yatube',
         'posts': posts,
     }
     return render(request, template, context)
 
 
-def group_posts(request, slug_str):
+def group_posts(request, slug):
     template = 'posts/group_list.html'
-    group = get_object_or_404(Group, slug=slug_str)
-    posts = Post.objects.filter(group=group).order_by('-pub_date')[:10]
+    group = get_object_or_404(Group, slug=slug)
+    posts = group.posts.all()[:COUNT_POSTS_PAGE]
     context = {
         'group': group,
         'posts': posts,

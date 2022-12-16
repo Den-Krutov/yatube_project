@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Post, Group
+
+from .models import Group, Post
 
 
 class PostAdmin(admin.ModelAdmin):
@@ -16,6 +17,5 @@ class PostAdmin(admin.ModelAdmin):
     empty_value_display = '-пусто-'
 
 
-# Register your models here.
 admin.site.register(Post, PostAdmin)
 admin.site.register(Group)
