@@ -9,7 +9,7 @@ COUNT_POSTS_PAGE: int = 10
 def index(request):
     """Display all posts."""
     template = 'posts/index.html'
-    posts = Post.objects.all()[:COUNT_POSTS_PAGE]
+    posts = Post.objects.select_related('author', 'group')[:COUNT_POSTS_PAGE]
     context = {
         'posts': posts,
     }
@@ -20,7 +20,7 @@ def group_posts(request, slug):
     """Display all posts group."""
     template = 'posts/group_list.html'
     group = get_object_or_404(Group, slug=slug)
-    posts = group.posts.all()[:COUNT_POSTS_PAGE]
+    posts = group.posts.select_related('author')[:COUNT_POSTS_PAGE]
     context = {
         'group': group,
         'posts': posts,
