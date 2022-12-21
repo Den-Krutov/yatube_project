@@ -1,9 +1,12 @@
+"""Manage app posts."""
 from django.contrib import admin
 
 from .models import Group, Post
 
 
 class PostAdmin(admin.ModelAdmin):
+    """Convenient representation of posts for management."""
+
     list_display = (
         'pk',
         'text',

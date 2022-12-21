@@ -1,3 +1,4 @@
+"""Django ORM app posts."""
 from django.contrib.auth import get_user_model
 from django.db import models
 
@@ -5,8 +6,10 @@ User = get_user_model()
 
 
 class Group(models.Model):
-    title = models.CharField(max_length=50)
-    slug = models.SlugField()
+    """Table for groups."""
+
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
     description = models.TextField()
 
     def __str__(self):
@@ -14,6 +17,8 @@ class Group(models.Model):
 
 
 class Post(models.Model):
+    """Table for posts."""
+
     text = models.TextField()
     pub_date = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(
@@ -30,4 +35,6 @@ class Post(models.Model):
     )
 
     class Meta:
+        """Sorted all posts by date."""
+
         ordering = ['-pub_date']
