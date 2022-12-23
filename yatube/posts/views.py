@@ -1,6 +1,4 @@
 """Provides response to requests app posts."""
-import datetime
-
 from django.shortcuts import get_object_or_404, render
 
 from .models import Group, Post
@@ -12,7 +10,6 @@ def index(request):
     """Display all posts."""
     template = 'posts/index.html'
     posts = Post.objects.select_related('author', 'group')[:COUNT_POSTS_PAGE]
-    #posts = Post.objects.select_related('author', 'group').filter(text__contains='утро', author=Post.objects.get(id=2).author, pub_date__range=(datetime.date(1854, 7, 7), datetime.date(1854, 7, 21)))
     context = {
         'posts': posts,
     }
