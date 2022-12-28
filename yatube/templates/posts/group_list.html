@@ -1,9 +1,11 @@
 {% extends 'base.html' %}
 {% block title %}Записи сообщества {{ group }}{% endblock  %}
-{% block content %}
+{% block header %}
   <h1>{{ group.title }}</h1>
   <h3>{{ group.description }}</h3>
-  {% for post in posts %}
+{% endblock header %}
+{% block content %}
+  {% for post in page_obj %}
     {% include 'includes/post.html' %}
     {% if not forloop.last %}<hr>{% endif %}
   {% endfor %}

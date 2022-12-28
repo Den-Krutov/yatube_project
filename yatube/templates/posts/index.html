@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}Последние обновления на сайте{% endblock  %}
+{% load uglify %}
+{% block header %}<h1>{{ "Это главная страница проекта Yatube"|uglify }}</h1>{% endblock header %}
 {% block content %}
-  {% load uglify %}
-  <h1>{{ "Это главная страница проекта Yatube"|uglify }}</h1>
-  {% for post in posts %}
+  {% for post in page_obj %}
     {% include 'includes/post.html' %}
     {% if post.group %}
       <a href="{% url 'posts:group_list' post.group.slug %}">
