@@ -1,11 +1,11 @@
-{% extends "base.html" %}
-{% block title %}Зарегистрироваться{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Новый пост{% endblock title %}
 {% block content %}
   <div class="row justify-content-center">
     <div class="col-md-8 p-5">
       <div class="card">
-        <div class="card-header">
-          Зарегистрироваться
+        <div class="card-header">       
+          Новый пост             
         </div>
         <div class="card-body">
           {% load user_filters %}
@@ -22,28 +22,28 @@
                 {{ error|escape }}
               </div>
             {% endfor %}
-          {% endif %}
-          <form method="post" action="{% url 'users:signup' %}">
+          {% endif %}     
+          <form method="post" action="{% url 'posts:post_create' %}">
             {% csrf_token %}
             {% for field in form %}
               <div class="form-group row my-3 p-3">
                 <label for="{{ field.id_for_label }}">
                   {{ field.label }}
                   {% if field.field.required %}
-                    <span class="required text-danger">*</span>
+                    <span class="required text-danger" >*</span>
                   {% endif %}
                 </label>
-                {{ field|addclass:'form-control' }}
+                {{ field|addclass:"form-control" }}
                 {% if field.help_text %}
                   <small id="{{ field.id_for_label }}-help" class="form-text text-muted">
                     {{ field.help_text|safe }}
                   </small>
-                {% endif %}
+                {% endif %}  
               </div>
             {% endfor %}
-            <div class="col-md-6 offset-md-4">
+            <div class="d-flex justify-content-end">
               <button type="submit" class="btn btn-primary">
-                Зарегистрироваться
+                Сохранить
               </button>
             </div>
           </form>
@@ -51,4 +51,4 @@
       </div>
     </div>
   </div>
-{% endblock %}
+{% endblock content %}

@@ -1,8 +1,10 @@
 """Provides response to requests app posts."""
 from django.core.paginator import Paginator
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.decorators import login_required
 
 from .models import Group, Post, User
+from .forms import PostForm
 
 COUNT_POSTS_PAGE: int = 10
 
@@ -57,3 +59,21 @@ def post_detail(request, post_id):
         'post': post,
     }
     return render(request, template, context)
+
+
+@login_required
+def post_create(request):
+    if request.method == 'POST':
+        form = PostForm(request.POST)
+        if form.is_valid():
+            text = form.cleaned_data['text']
+            author = request.user
+            group = form.cleaned_data['group']
+            post = Post.objects.create(text=text,
+                                       author=author,
+                                       group=group)
+            post.save()
+            return redirect('posts:profile', author.username)
+    else:
+        form = PostForm()
+    return render(request, 'posts/create_post.html', context={'form': form})
