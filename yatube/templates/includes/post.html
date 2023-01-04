@@ -1,11 +1,11 @@
 <article>
   <ul>
-    <li>
-      Автор: {{ post.author.get_full_name }}
-      {% if not author %}
+    {% if not author %}
+      <li>
+        Автор: {{ post.author.get_full_name }}
         <a href="{% url 'posts:profile' post.author.username %}">все посты пользователя</a>
-      {% endif %}
-    </li>
+      </li>
+    {% endif %}
     <li>
       Дата публикации: {{ post.pub_date|date:"d E Y"}}
     </li>
@@ -14,8 +14,9 @@
     {{ post.text }}
   </p>
   <a href="{% url 'posts:post_detail' post.pk %}">подробная информация</a>
+  <br>
+  {% if not group and post.group %}
+    <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>        
+  {% endif %}
+  {% if not forloop.last %}<hr>{% endif %}
 </article>
-{% if not group and post.group %}
-  <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>        
-{% endif %}
-{% if not forloop.last %}<hr>{% endif %}

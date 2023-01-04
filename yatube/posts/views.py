@@ -1,10 +1,10 @@
 """Provides response to requests app posts."""
-from django.core.paginator import Paginator
-from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import Group, Post, User
 from .forms import PostForm
+from .models import Group, Post, User
 
 COUNT_POSTS_PAGE: int = 10
 
@@ -66,14 +66,33 @@ def post_create(request):
     if request.method == 'POST':
         form = PostForm(request.POST)
         if form.is_valid():
-            text = form.cleaned_data['text']
-            author = request.user
-            group = form.cleaned_data['group']
-            post = Post.objects.create(text=text,
-                                       author=author,
-                                       group=group)
+            post = form.save(commit=False)
+            post.author = request.user
             post.save()
-            return redirect('posts:profile', author.username)
+            return redirect('posts:profile', post.author.username)
     else:
         form = PostForm()
     return render(request, 'posts/create_post.html', context={'form': form})
+
+
+@login_required
+def post_edit(request, post_id):
+    post = get_object_or_404(Post.objects.select_related('author', 'group'),
+                             pk=post_id)
+    redirected_page = redirect('posts:post_detail', post.pk)
+    if request.user == post.author:
+        if request.method == 'POST':
+            form = PostForm(request.POST)
+            if form.is_valid():
+                post = form.save(commit=False)
+                post.author = request.user
+                post.save()
+                return redirected_page
+        else:
+            form = PostForm(initial={'text': post.text,
+                                     'group': post.group})
+        return render(request,
+                      'posts/create_post.html',
+                      context={'form': form,
+                               'is_edit': True})
+    return redirected_page
