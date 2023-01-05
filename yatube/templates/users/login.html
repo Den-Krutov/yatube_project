@@ -1,16 +1,6 @@
-{% extends "card.html" %}
+{% extends 'card.html' %}
 {% block title %}Войти{% endblock title %}
 {% block card_header %}Войти на сайт{% endblock card_header %}
-{% block action %}
-  {% if action_url %}
-    action="{% url action_url %}"
-  {% endif %}
-{% endblock action %}
-{% block button %}
-  Войти
-{% endblock button %}
-{% block card_form_password_recovery %}
-  <a href="{% url 'users:password_reset' %}" class="btn btn-link">
-    Забыли пароль?
-  </a>
-{% endblock card_form_password_recovery %}
+{% block card_body %}
+  {% include 'includes/form.html' with action_url='users:login' button_name='Войти' is_link_password_reset=True %}
+{% endblock card_body %}

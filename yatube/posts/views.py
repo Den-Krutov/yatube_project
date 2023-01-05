@@ -93,6 +93,7 @@ def post_edit(request, post_id):
                                      'group': post.group})
         return render(request,
                       'posts/create_post.html',
-                      context={'form': form,
+                      context={'post': post,
+                               'form': form,
                                'is_edit': True})
     return redirected_page

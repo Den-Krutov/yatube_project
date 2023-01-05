@@ -1,17 +1,10 @@
 {% extends 'card.html' %}
 {% block title %}Новый пост{% endblock title %}
-{% block card_header %}
+{% block card_header %}{% if is_edit %}Редактировать запись{% else %}Добавить запись{% endif %}{% endblock card_header %}
+{% block card_body %}
   {% if is_edit %}
-    Редактировать запись
+    {% include 'includes/form.html' with action_url='posts:post_edit' arg=post.pk button_name='Сохранить' is_button_end=True%}
   {% else %}
-    Добавить запись
+    {% include 'includes/form.html' with action_url='posts:post_create' button_name='Добавить' is_button_end=True %}
   {% endif %}
-{% endblock card_header %}
-{% block action %}action="{% url 'posts:post_create' %}"{% endblock action %}
-{% block button %}
-  {% if is_edit %}
-    Сохранить
-  {% else %}
-    Добавить
-  {% endif %}
-{% endblock button %}
+{% endblock card_body %}
