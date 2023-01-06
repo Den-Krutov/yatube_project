@@ -10,32 +10,14 @@
         {% with request.resolver_match.view_name as view_name %}
           {% if request.user.is_authenticated %}
             {% for nav_item in authenticated_nav_panel_names %}
-              <li class="nav-item">
-                <a class="nav-link 
-                  {% if view_name == nav_item.url %}
-                    active
-                  {% endif %}" 
-                  href="{% url nav_item.url %}"
-                >
-                  {{ nav_item.name }}
-                </a>
-              </li>
+              {% include 'includes/nav_item.html' %}
             {% endfor %}
             <li>
               Пользователь: {{ user.username }}
             </li>
           {% else %}
             {% for nav_item in unauthenticated_nav_panel_names %}
-              <li class="nav-item">
-                <a class="nav-link 
-                  {% if view_name == nav_item.url %}
-                    active
-                  {% endif %}" 
-                  href="{% url nav_item.url %}"
-                >
-                  {{ nav_item.name }}
-                </a>
-              </li>
+             {% include 'includes/nav_item.html' %}
             {% endfor %}
           {% endif %}
         {% endwith %}

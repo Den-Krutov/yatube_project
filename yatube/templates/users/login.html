@@ -2,5 +2,9 @@
 {% block title %}Войти{% endblock title %}
 {% block card_header %}Войти на сайт{% endblock card_header %}
 {% block card_body %}
-  {% include 'includes/form.html' with action_url='users:login' button_name='Войти' is_link_password_reset=True %}
+  {% if not user.is_authenticated %}
+    {% include 'includes/form.html' with action_url='users:login' button_name='Войти' is_link_password_reset=True %}
+  {% else %}
+    <p>Ты залогиненный:)<p>
+  {% endif %}
 {% endblock card_body %}

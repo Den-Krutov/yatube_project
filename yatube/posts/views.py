@@ -26,7 +26,7 @@ def group_posts(request, slug):
     """Display all posts group."""
     template = 'posts/group_list.html'
     group = get_object_or_404(Group, slug=slug)
-    posts = group.posts.select_related('author')
+    posts = group.posts.select_related('author', 'group')
     paginator = Paginator(posts, COUNT_POSTS_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -40,7 +40,7 @@ def group_posts(request, slug):
 def profile(request, username):
     template = 'posts/profile.html'
     author = get_object_or_404(User, username=username)
-    posts = author.posts.select_related('group')
+    posts = author.posts.select_related('author', 'group')
     paginator = Paginator(posts, COUNT_POSTS_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -79,18 +79,15 @@ def post_create(request):
 def post_edit(request, post_id):
     post = get_object_or_404(Post.objects.select_related('author', 'group'),
                              pk=post_id)
-    redirected_page = redirect('posts:post_detail', post.pk)
+    redirected_page = redirect('posts:post_detail', post_id=post.pk)
     if request.user == post.author:
         if request.method == 'POST':
-            form = PostForm(request.POST)
+            form = PostForm(request.POST, instance=post)
             if form.is_valid():
-                post = form.save(commit=False)
-                post.author = request.user
-                post.save()
+                form.save()
                 return redirected_page
         else:
-            form = PostForm(initial={'text': post.text,
-                                     'group': post.group})
+            form = PostForm(instance=post)
         return render(request,
                       'posts/create_post.html',
                       context={'post': post,

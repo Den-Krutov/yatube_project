@@ -16,7 +16,6 @@ class PostForm(forms.ModelForm):
             'text': _('Текст нового поста'),
             'group': _('Группа, к которой будет относиться пост'),
         }
-        # error_messages = {...}
 
     MAX_LENGTH_TEXT = 2048
     MAX_LENGTH_WORD = 64
