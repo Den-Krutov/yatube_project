@@ -9,7 +9,7 @@ class PostForm(forms.ModelForm):
         'max_length_text': _('Пост слишком большой'),
         'max_length_word': _('В записи присутствует слишком большое слово'),
     }
-    
+
     class Meta:
         model = Post
         fields = ('text', 'group',)
