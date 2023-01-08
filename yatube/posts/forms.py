@@ -5,6 +5,9 @@ from .models import Post
 
 
 class PostForm(forms.ModelForm):
+    MAX_LENGTH_TEXT = 2048
+    MAX_LENGTH_WORD = 64
+
     error_messages = {
         'max_length_text': _('Пост слишком большой'),
         'max_length_word': _('В записи присутствует слишком большое слово'),
@@ -22,11 +25,8 @@ class PostForm(forms.ModelForm):
             'group': _('Группа, к которой будет относиться пост'),
         }
 
-    MAX_LENGTH_TEXT = 2048
-    MAX_LENGTH_WORD = 64
-
     def clean_text(self):
-        text = self.cleaned_data["text"]
+        text = self.cleaned_data['text']
         if len(text) > self.MAX_LENGTH_TEXT:
             raise forms.ValidationError(
                 self.error_messages['max_length_text'],
