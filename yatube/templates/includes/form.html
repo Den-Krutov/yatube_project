@@ -13,15 +13,7 @@
     </div>
   {% endfor %}
 {% endif %}
-<form method="post" 
-  {% if action_url %}
-    {% if arg %}
-      action="{% url action_url arg %}"
-    {% else %}
-      action="{% url action_url %}"
-    {% endif %}
-  {% endif %}
->
+<form method="post">
   {% csrf_token %}
   {% for field in form %}
     <div class="form-group row my-3 p-3">
