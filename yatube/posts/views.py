@@ -2,20 +2,13 @@
 from functools import partial
 
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import PostForm
+from .helpers import get_page_obj
 from .models import Group, Post, User
 
 COUNT_POSTS_PAGE: int = 10
-
-
-def paginator(request, objects):
-    """Converts objects in instance Page with request"""
-    paginator = Paginator(objects, COUNT_POSTS_PAGE)
-    page_number = request.GET.get('page')
-    return paginator.get_page(page_number)
 
 
 def index(request):
@@ -23,7 +16,9 @@ def index(request):
     posts = Post.objects.prefetch_related('author', 'group')
     return render(request,
                   'posts/index.html',
-                  context={'page_obj': paginator(request, posts)})
+                  context={'page_obj': get_page_obj(request,
+                                                    posts,
+                                                    COUNT_POSTS_PAGE)})
 
 
 def group_posts(request, slug):
@@ -33,7 +28,9 @@ def group_posts(request, slug):
     return render(request,
                   'posts/group_list.html',
                   context={'group': group,
-                           'page_obj': paginator(request, posts)})
+                           'page_obj': get_page_obj(request,
+                                                    posts,
+                                                    COUNT_POSTS_PAGE)})
 
 
 def profile(request, username):
@@ -42,7 +39,9 @@ def profile(request, username):
     return render(request,
                   'posts/profile.html',
                   context={'group': author,
-                           'page_obj': paginator(request, posts)})
+                           'page_obj': get_page_obj(request,
+                                                    posts,
+                                                    COUNT_POSTS_PAGE)})
 
 
 def post_detail(request, post_id):
