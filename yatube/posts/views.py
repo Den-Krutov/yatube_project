@@ -8,17 +8,13 @@ from .forms import PostForm
 from .helpers import get_page_obj
 from .models import Group, Post, User
 
-COUNT_POSTS_PAGE: int = 10
-
 
 def index(request):
     """Display all posts."""
     posts = Post.objects.prefetch_related('author', 'group')
     return render(request,
                   'posts/index.html',
-                  context={'page_obj': get_page_obj(request,
-                                                    posts,
-                                                    COUNT_POSTS_PAGE)})
+                  context={'page_obj': get_page_obj(request, posts)})
 
 
 def group_posts(request, slug):
@@ -27,10 +23,7 @@ def group_posts(request, slug):
     posts = group.posts.prefetch_related('author')
     return render(request,
                   'posts/group_list.html',
-                  context={'group': group,
-                           'page_obj': get_page_obj(request,
-                                                    posts,
-                                                    COUNT_POSTS_PAGE)})
+                  context={'page_obj': get_page_obj(request, posts)})
 
 
 def profile(request, username):
@@ -38,10 +31,7 @@ def profile(request, username):
     posts = author.posts.prefetch_related('group')
     return render(request,
                   'posts/profile.html',
-                  context={'group': author,
-                           'page_obj': get_page_obj(request,
-                                                    posts,
-                                                    COUNT_POSTS_PAGE)})
+                  context={'page_obj': get_page_obj(request, posts)})
 
 
 def post_detail(request, post_id):
