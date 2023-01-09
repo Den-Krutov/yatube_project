@@ -20,7 +20,7 @@ def index(request):
 def group_posts(request, slug):
     """Display all posts group."""
     group = get_object_or_404(Group, slug=slug)
-    posts = group.posts.prefetch_related('author')
+    posts = group.posts.select_related('author')
     return render(request,
                   'posts/group_list.html',
                   context={'page_obj': get_page_obj(request, posts)})
@@ -28,14 +28,14 @@ def group_posts(request, slug):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    posts = author.posts.prefetch_related('group')
+    posts = author.posts.select_related('group')
     return render(request,
                   'posts/profile.html',
                   context={'page_obj': get_page_obj(request, posts)})
 
 
 def post_detail(request, post_id):
-    post = get_object_or_404(Post.objects.prefetch_related('author', 'group'),
+    post = get_object_or_404(Post.objects.select_related('author', 'group'),
                              pk=post_id)
     return render(request, 'posts/post_detail.html', context={'post': post})
 
