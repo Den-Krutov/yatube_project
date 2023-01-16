@@ -1,10 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}Последние обновления на сайте{% endblock  %}
-{% load user_filters %}
-{% block header %}<h1>{{ "Это главная страница проекта Yatube"|uglify }}</h1>{% endblock header %}
+{% block header %}<h1>{{ "Это главная страница проекта Yatube" }}</h1>{% endblock header %}
 {% block content %}
   {% for post in page_obj %}
-    {% include 'includes/post.html' %}
+    {% include 'posts/includes/post.html' %}
   {% endfor %}
-  {% include 'includes/paginator.html' %}
+  {% include 'posts/includes/paginator.html' %}
 {% endblock %}

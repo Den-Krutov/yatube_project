@@ -6,7 +6,7 @@
 {% endblock header %}
 {% block content %}
   {% for post in page_obj %}
-    {% include 'includes/post.html' %}
+    {% include 'posts/includes/post.html' %}
   {% endfor %}
-  {% include 'includes/paginator.html' %}
+  {% include 'posts/includes/paginator.html' %}
 {% endblock content %}

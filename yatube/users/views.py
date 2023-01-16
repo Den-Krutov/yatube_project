@@ -1,9 +1,26 @@
-from django.urls import reverse_lazy
-from django.views.generic import CreateView
+from django.shortcuts import render, redirect
+from django.core.mail import send_mail
+
 from users.forms import CreationForm
 
 
-class SingUp(CreateView):
-    form_class = CreationForm
-    success_url = reverse_lazy('posts:index')
-    template_name = 'users/signup.html'
+def send_msg(login, email):
+    subject = 'Регистрация прошла успешно'
+    body = f"""Ваш аккаунт успешно зарегистрирован на сайте Yatube!
+
+    Чтобы войти в свой аккаунт используйте логин: {login}.
+
+    С уважением, команда Yatube.
+
+    """
+    send_mail(subject, body, 'adminyatube@yandex.ru', [email, ])
+
+
+def sing_up(request):
+    form = CreationForm(request.POST or None)
+    if form.is_valid():
+        send_msg(form.cleaned_data['username'],
+                 form.cleaned_data['email'])
+        form.save()
+        return redirect('posts:index')
+    return render(request, 'users/signup.html', context={'form': form})

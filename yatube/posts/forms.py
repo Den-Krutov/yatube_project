@@ -5,6 +5,14 @@ from .models import Post
 
 
 class PostForm(forms.ModelForm):
+    MAX_LENGTH_TEXT = 2048
+    MAX_LENGTH_WORD = 64
+
+    error_messages = {
+        'max_length_text': _('Пост слишком большой'),
+        'max_length_word': _('В записи присутствует слишком большое слово'),
+    }
+
     class Meta:
         model = Post
         fields = ('text', 'group',)
@@ -17,23 +25,17 @@ class PostForm(forms.ModelForm):
             'group': _('Группа, к которой будет относиться пост'),
         }
 
-    MAX_LENGTH_TEXT = 2048
-    MAX_LENGTH_WORD = 64
-
     def clean_text(self):
-        data = self.cleaned_data["text"]
-        if len(data) > self.MAX_LENGTH_TEXT:
+        text = self.cleaned_data['text']
+        if len(text) > self.MAX_LENGTH_TEXT:
             raise forms.ValidationError(
-                '%(value)s',
-                code='max_length_text',
-                params={'value': _('Пост слишком большой')}
+                self.error_messages['max_length_text'],
+                code='max_length_text'
             )
-        for word in data.split():
+        for word in text.split():
             if len(word) > self.MAX_LENGTH_WORD:
                 raise forms.ValidationError(
-                    '%(value)s',
-                    code='max_length_word',
-                    params={'value': _('В записи присутствует '
-                                       'слишком большое слово')}
+                    self.error_messages['max_length_word'],
+                    code='max_length_word'
                 )
-        return data
+        return text
