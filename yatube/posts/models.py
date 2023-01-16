@@ -38,3 +38,6 @@ class Post(models.Model):
         """Sorted all posts by date."""
 
         ordering = ['-pub_date']
+
+    def __str__(self) -> str:
+        return self.text
