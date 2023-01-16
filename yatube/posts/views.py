@@ -23,7 +23,8 @@ def group_posts(request, slug):
     posts = group.posts.select_related('author')
     return render(request,
                   'posts/group_list.html',
-                  context={'page_obj': get_page_obj(request, posts)})
+                  context={'group': group,
+                           'page_obj': get_page_obj(request, posts)})
 
 
 def profile(request, username):
@@ -31,7 +32,8 @@ def profile(request, username):
     posts = author.posts.select_related('group')
     return render(request,
                   'posts/profile.html',
-                  context={'page_obj': get_page_obj(request, posts)})
+                  context={'author': author,
+                           'page_obj': get_page_obj(request, posts)})
 
 
 def post_detail(request, post_id):
@@ -44,10 +46,9 @@ def post_detail(request, post_id):
 def post_create(request):
     form = PostForm(request.POST or None)
     if form.is_valid():
-        post = form.save(commit=False)
-        post.author = request.user
-        post.save()
-        return redirect('posts:profile', post.author.username)
+        form.instance.author = request.user
+        form.save()
+        return redirect('posts:profile', request.user.username)
     return render(request, 'posts/create_post.html', context={'form': form})
 
 
@@ -66,4 +67,4 @@ def post_edit(request, post_id):
         return get_redirected_page()
     return render(request,
                   'posts/create_post.html',
-                  context={'post': post, 'form': form, 'is_edit': True})
+                  context={'form': form, 'is_edit': True})
