@@ -8,9 +8,16 @@ User = get_user_model()
 class Group(models.Model):
     """Table for groups."""
 
-    title = models.CharField('название', max_length=200)
+    title = models.CharField(
+        'Заголовок',
+        help_text='Введите название группы',
+        max_length=200,
+    )
     slug = models.SlugField(unique=True)
-    description = models.TextField('описание')
+    description = models.TextField(
+        'Описание',
+        help_text='Введите описание группы',
+    )
 
     def __str__(self) -> str:
         return self.title
@@ -19,17 +26,23 @@ class Group(models.Model):
 class Post(models.Model):
     """Table for posts."""
 
-    text = models.TextField('текст')
-    pub_date = models.DateTimeField('дата публикации', auto_now_add=True)
+    text = models.TextField(
+        'Текст поста',
+        help_text='Введите текст поста',
+    )
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True)
     author = models.ForeignKey(
         User,
-        verbose_name='автор',
+        verbose_name='Автор',
         on_delete=models.CASCADE,
         related_name='posts'
     )
     group = models.ForeignKey(
         Group,
-        verbose_name='группа',
+        verbose_name='Группа',
+        help_text='Группа, к которой будет относиться пост',
         on_delete=models.SET_NULL,
         related_name='posts',
         blank=True,
@@ -39,7 +52,7 @@ class Post(models.Model):
     class Meta:
         """Sorted all posts by date."""
 
-        ordering = ['-pub_date']
+        ordering = ('-pub_date',)
 
     def __str__(self) -> str:
         return self.text[:15]

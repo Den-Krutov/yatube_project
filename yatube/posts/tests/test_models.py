@@ -3,7 +3,49 @@ from django.test import TestCase
 from ..models import Group, Post, User
 
 
-class PostsModelTest(TestCase):
+class GroupModelTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.group = Group.objects.create(
+            title='test title group',
+            slug='test slug group',
+            description='test description',
+        )
+
+    def test_model_have_correct_object_name(self):
+        group = GroupModelTest.group
+        expected_name = group.title
+        self.assertEqual(str(group), expected_name)
+
+    def test_verbose_name(self):
+        group = GroupModelTest.group
+        field_verboses = {
+            'title': 'Заголовок',
+            'description': 'Описание',
+        }
+        for field, expected in field_verboses.items():
+            with self.subTest(field=field):
+                self.assertEqual(
+                    group._meta.get_field(field).verbose_name,
+                    expected
+                )
+
+    def test_help_text(self):
+        group = GroupModelTest.group
+        field_help_texts = {
+            'title': 'Введите название группы',
+            'description': 'Введите описание группы',
+        }
+        for field, expected in field_help_texts.items():
+            with self.subTest(field=field):
+                self.assertEqual(
+                    group._meta.get_field(field).help_text,
+                    expected
+                )
+
+
+class PostModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -14,18 +56,40 @@ class PostsModelTest(TestCase):
             description='test_description',
         )
         cls.post = Post.objects.create(
-            text='Text' * 5,
+            text='word ' * 5,
             author=cls.user,
             group=cls.group
         )
 
-    def test_models_have_correct_object_names(self):
-        group = PostsModelTest.group
-        post = PostsModelTest.post
-        expected_names = {
-            group: group.title,
-            post: post.text[:15],
+    def test_model_have_correct_object_name(self):
+        post = PostModelTest.post
+        expected_name = post.text[:15]
+        self.assertEqual(str(post), expected_name)
+
+    def test_verbose_name(self):
+        post = PostModelTest.post
+        field_verboses = {
+            'text': 'Текст поста',
+            'pub_date': 'Дата публикации',
+            'author': 'Автор',
+            'group': 'Группа',
         }
-        for obj, expected in expected_names.items():
-            with self.subTest(obj=obj):
-                self.assertEqual(str(obj), expected)
+        for field, expected in field_verboses.items():
+            with self.subTest(field=field):
+                self.assertEqual(
+                    post._meta.get_field(field).verbose_name,
+                    expected
+                )
+
+    def test_help_text(self):
+        post = PostModelTest.post
+        field_help_texts = {
+            'text': 'Введите текст поста',
+            'group': 'Группа, к которой будет относиться пост',
+        }
+        for field, expected in field_help_texts.items():
+            with self.subTest(field=field):
+                self.assertEqual(
+                    post._meta.get_field(field).help_text,
+                    expected
+                )

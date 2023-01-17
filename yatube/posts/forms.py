@@ -1,5 +1,4 @@
 from django import forms
-from django.utils.translation import gettext_lazy as _
 
 from .models import Post
 
@@ -9,20 +8,20 @@ class PostForm(forms.ModelForm):
     MAX_LENGTH_WORD = 64
 
     error_messages = {
-        'max_length_text': _('Пост слишком большой'),
-        'max_length_word': _('В записи присутствует слишком большое слово'),
+        'max_length_text': 'Пост слишком большой',
+        'max_length_word': 'В записи присутствует слишком большое слово',
     }
 
     class Meta:
         model = Post
         fields = ('text', 'group',)
         labels = {
-            'text': _('Текст поста'),
-            'group': _('Группа'),
+            'text': 'Текст поста',
+            'group': 'Группа',
         }
         help_texts = {
-            'text': _('Текст нового поста'),
-            'group': _('Группа, к которой будет относиться пост'),
+            'text': 'Текст нового поста',
+            'group': 'Группа, к которой будет относиться пост',
         }
 
     def clean_text(self):
