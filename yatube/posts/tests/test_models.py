@@ -3,7 +3,7 @@ from django.test import TestCase
 from ..models import Group, Post, User
 
 
-class GroupModelTest(TestCase):
+class PostsGroupModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -14,12 +14,10 @@ class GroupModelTest(TestCase):
         )
 
     def test_model_have_correct_object_name(self):
-        group = GroupModelTest.group
-        expected_name = group.title
-        self.assertEqual(str(group), expected_name)
+        expected_name = PostsGroupModelTest.group.title
+        self.assertEqual(str(PostsGroupModelTest.group), expected_name)
 
     def test_verbose_name(self):
-        group = GroupModelTest.group
         field_verboses = {
             'title': 'Заголовок',
             'description': 'Описание',
@@ -27,12 +25,12 @@ class GroupModelTest(TestCase):
         for field, expected in field_verboses.items():
             with self.subTest(field=field):
                 self.assertEqual(
-                    group._meta.get_field(field).verbose_name,
+                    (PostsGroupModelTest.group._meta.get_field(field)
+                     .verbose_name),
                     expected
                 )
 
     def test_help_text(self):
-        group = GroupModelTest.group
         field_help_texts = {
             'title': 'Введите название группы',
             'description': 'Введите описание группы',
@@ -40,12 +38,13 @@ class GroupModelTest(TestCase):
         for field, expected in field_help_texts.items():
             with self.subTest(field=field):
                 self.assertEqual(
-                    group._meta.get_field(field).help_text,
+                    (PostsGroupModelTest.group._meta.get_field(field)
+                     .help_text),
                     expected
                 )
 
 
-class PostModelTest(TestCase):
+class PostsPostModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -62,12 +61,10 @@ class PostModelTest(TestCase):
         )
 
     def test_model_have_correct_object_name(self):
-        post = PostModelTest.post
-        expected_name = post.text[:15]
-        self.assertEqual(str(post), expected_name)
+        expected_name = PostsPostModelTest.post.text[:15]
+        self.assertEqual(str(PostsPostModelTest.post), expected_name)
 
     def test_verbose_name(self):
-        post = PostModelTest.post
         field_verboses = {
             'text': 'Текст поста',
             'pub_date': 'Дата публикации',
@@ -77,12 +74,12 @@ class PostModelTest(TestCase):
         for field, expected in field_verboses.items():
             with self.subTest(field=field):
                 self.assertEqual(
-                    post._meta.get_field(field).verbose_name,
+                    (PostsPostModelTest.post._meta.get_field(field)
+                     .verbose_name),
                     expected
                 )
 
     def test_help_text(self):
-        post = PostModelTest.post
         field_help_texts = {
             'text': 'Введите текст поста',
             'group': 'Группа, к которой будет относиться пост',
@@ -90,6 +87,6 @@ class PostModelTest(TestCase):
         for field, expected in field_help_texts.items():
             with self.subTest(field=field):
                 self.assertEqual(
-                    post._meta.get_field(field).help_text,
+                    PostsPostModelTest.post._meta.get_field(field).help_text,
                     expected
                 )
