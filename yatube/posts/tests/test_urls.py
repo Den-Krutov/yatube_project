@@ -38,7 +38,7 @@ class PostsUrlsTest(TestCase):
         url_patterns = {
             '/': guest_client,
             f'/group/{PostsUrlsTest.group.slug}/': guest_client,
-            f'/posts/profile/{post.author.username}/': guest_client,
+            f'/profile/{post.author.username}/': guest_client,
             f'/posts/{post.pk}/': guest_client,
             '/create/': PostsUrlsTest.auth_client,
             f'/posts/{post.pk}/edit/': PostsUrlsTest.author_auth_client,
@@ -79,7 +79,7 @@ class PostsUrlsTest(TestCase):
         templates = {
             '/': 'posts/index.html',
             f'/group/{PostsUrlsTest.group.slug}/': 'posts/group_list.html',
-            f'/posts/profile/{post.author.username}/': 'posts/profile.html',
+            f'/profile/{post.author.username}/': 'posts/profile.html',
             f'/posts/{post.pk}/': 'posts/post_detail.html',
             '/create/': 'posts/create_post.html',
             f'/posts/{post.pk}/edit/': 'posts/create_post.html',

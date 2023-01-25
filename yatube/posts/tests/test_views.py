@@ -1,6 +1,8 @@
-from django.test import TestCase, Client
+from django import forms
+from django.test import Client, TestCase
 from django.urls import reverse
 
+from ..helpers import LIMIT
 from ..models import Group, Post, User
 
 
@@ -8,9 +10,9 @@ class PostsViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.author_user = User.objects.create_user(username='authorAuthUser')
-        cls.author_auth_client = Client()
-        cls.author_auth_client.force_login(cls.author_user)
+        cls.user = User.objects.create_user(username='user')
+        cls.client = Client()
+        cls.client.force_login(cls.user)
         cls.group = Group.objects.create(
             title='test_title',
             slug='test-slug',
@@ -18,30 +20,77 @@ class PostsViewsTest(TestCase):
         )
         cls.post = Post.objects.create(
             text='word ' * 5,
-            author=cls.author_user,
+            author=cls.user,
             group=cls.group
         )
+        cls.path_names = [
+            'index',
+            'group_list',
+            'profile',
+            'post_detail',
+            'post_create',
+            'post_edit',
+        ]
+        cls.urls = [
+            reverse('posts:index'),
+            reverse('posts:group_list', args=[cls.group.slug]),
+            reverse('posts:profile', args=[cls.user.username]),
+            reverse('posts:post_detail', args=[cls.post.pk]),
+            reverse('posts:post_create'),
+            reverse('posts:post_edit', args=[cls.post.pk]),
+        ]
+        cls.paths = {
+            name: url for name, url in zip(cls.path_names, cls.urls)
+        }
 
     def test_responce_templates(self):
-        post = PostsViewsTest.post
-        url_templates = {
-            reverse('posts:index'):
-                'posts/index.html',
-            reverse('posts:group_list', args=[PostsViewsTest.group.slug]):
-                'posts/group_list.html',
-            reverse('posts:profile', args=[post.author.username]):
-                'posts/profile.html',
-            reverse('posts:post_detail', args=[post.pk]):
-                'posts/post_detail.html',
-            reverse('posts:post_create'):
-                'posts/create_post.html',
-            reverse('posts:post_edit', args=[post.pk]):
-                'posts/create_post.html',
+        templates = [
+            'posts/index.html',
+            'posts/group_list.html',
+            'posts/profile.html',
+            'posts/post_detail.html',
+            'posts/create_post.html',
+            'posts/create_post.html',
+        ]
+        path_templates = {
+            name: template for name, template in zip(
+                PostsViewsTest.path_names, templates
+            )
         }
-        for url, template in url_templates.items():
+        for path_name, url in PostsViewsTest.paths.items():
             with self.subTest(url=url):
-                responce = PostsViewsTest.author_auth_client.get(url)
-                self.assertTemplateUsed(responce, template)
+                responce = PostsViewsTest.client.get(url)
+                self.assertTemplateUsed(
+                    responce,
+                    path_templates.get(path_name)
+                )
 
-    def test_views_show_correct_context(self):
-        pass
+    def test_no_form_pages_show_correct_context(self):
+        context_pages = [
+            {'page_obj': list(Post.objects.all()[:LIMIT])},
+            {'group': PostsViewsTest.group,
+             'page_obj': list(PostsViewsTest.group.posts.all()[:LIMIT])},
+            {'author': PostsViewsTest.user,
+             'page_obj': list(PostsViewsTest.user.posts.all()[:LIMIT])},
+            {'post': Post.objects.get()},
+        ]
+        path_context_pages = {
+            name: context for name, context in zip(
+                PostsViewsTest.path_names[:len(context_pages)], context_pages
+            )
+        }
+        for path_name, context in path_context_pages.items():
+            for key, expected in context.items():
+                responce = PostsViewsTest.client.get(
+                    PostsViewsTest.paths.get(path_name)
+                )
+                with self.subTest(url=PostsViewsTest.paths.get(path_name),
+                                  key=key):
+                    self.assertTrue(responce.context.get(key))
+                    if key == 'page_obj':
+                        self.assertEqual(
+                            responce.context.get(key).object_list,
+                            expected
+                        )
+                    else:
+                        self.assertEqual(responce.context.get(key), expected)
