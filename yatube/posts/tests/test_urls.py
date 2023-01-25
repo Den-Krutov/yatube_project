@@ -1,13 +1,11 @@
 from http import HTTPStatus
 
-from django.conf import settings
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from ..models import Group, Post, User
 
 
-class PostsUrlsTests(TestCase):
+class PostsUrlsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -35,48 +33,40 @@ class PostsUrlsTests(TestCase):
         }
 
     def test_accept_urls_users(self):
-        guest_client = PostsUrlsTests.guest_client
-        auth_client = PostsUrlsTests.auth_client
-        author_auth_client = PostsUrlsTests.author_auth_client
-        group = PostsUrlsTests.group
-        post = PostsUrlsTests.post
+        guest_client = PostsUrlsTest.guest_client
+        post = PostsUrlsTest.post
         url_patterns = {
-            reverse('posts:index'): guest_client,
-            reverse('posts:group_list', args=[group.slug]): guest_client,
-            reverse('posts:profile', args=[post.author.username]): (
-                guest_client
-            ),
-            reverse('posts:post_detail', args=[post.pk]): guest_client,
-            reverse('posts:post_create'): auth_client,
-            reverse('posts:post_edit', args=[post.pk]): author_auth_client,
+            '/': guest_client,
+            f'/group/{PostsUrlsTest.group.slug}/': guest_client,
+            f'/posts/profile/{post.author.username}/': guest_client,
+            f'/posts/{post.pk}/': guest_client,
+            '/create/': PostsUrlsTest.auth_client,
+            f'/posts/{post.pk}/edit/': PostsUrlsTest.author_auth_client,
         }
-        for url, obj in url_patterns.items():
-            with self.subTest(url=url, obj=PostsUrlsTests.client_names[obj]):
-                responce = obj.get(url)
+        for url, client in url_patterns.items():
+            with self.subTest(url=url, obj=PostsUrlsTest.client_names[client]):
+                responce = client.get(url)
                 self.assertEqual(responce.status_code, HTTPStatus.OK.value)
 
     def test_url_unexisting_page(self):
-        responce = PostsUrlsTests.guest_client.get('/unexisting_page/')
+        responce = PostsUrlsTest.guest_client.get('/unexisting_page/')
         self.assertEqual(responce.status_code, HTTPStatus.NOT_FOUND.value)
 
     def test_redirect_urls_users(self):
-        guest_client = PostsUrlsTests.guest_client
-        auth_client = PostsUrlsTests.auth_client
-        post = PostsUrlsTests.post
+        guest_client = PostsUrlsTest.guest_client
+        auth_client = PostsUrlsTest.auth_client
+        post = PostsUrlsTest.post
         url_patterns = {
-            guest_client: [
-                reverse('posts:post_create'),
-                reverse('posts:post_edit', args=[post.pk]),
-            ],
-            auth_client: [reverse('posts:post_edit', args=[post.pk]),],
+            guest_client: ['/create/', f'/posts/{post.pk}/edit/',],
+            auth_client: [f'/posts/{post.pk}/edit/',],
         }
         expected_url_patterns = {
-            guest_client: reverse(settings.LOGIN_URL) + '?next={url}',
-            auth_client: reverse('posts:post_detail', args=[post.pk]),
+            guest_client: '/auth/login/?next={url}',
+            auth_client: f'/posts/{post.pk}/',
         }
         for obj, url_list in url_patterns.items():
             for url in url_list:
-                with self.subTest(obj=PostsUrlsTests.client_names[obj],
+                with self.subTest(obj=PostsUrlsTest.client_names[obj],
                                   url=url):
                     responce = obj.get(url, follow=True)
                     self.assertRedirects(
@@ -85,24 +75,16 @@ class PostsUrlsTests(TestCase):
                     )
 
     def test_responce_templates(self):
-        author_auth_client = PostsUrlsTests.author_auth_client
-        group = PostsUrlsTests.group
-        post = PostsUrlsTests.post
+        post = PostsUrlsTest.post
         templates = {
-            reverse('posts:index'):
-                'posts/index.html',
-            reverse('posts:group_list', args=[group.slug]):
-                'posts/group_list.html',
-            reverse('posts:profile', args=[post.author.username]):
-                'posts/profile.html',
-            reverse('posts:post_detail', args=[post.pk]):
-                'posts/post_detail.html',
-            reverse('posts:post_create'):
-                'posts/create_post.html',
-            reverse('posts:post_edit', args=[post.pk]):
-                'posts/create_post.html',
+            '/': 'posts/index.html',
+            f'/group/{PostsUrlsTest.group.slug}/': 'posts/group_list.html',
+            f'/posts/profile/{post.author.username}/': 'posts/profile.html',
+            f'/posts/{post.pk}/': 'posts/post_detail.html',
+            '/create/': 'posts/create_post.html',
+            f'/posts/{post.pk}/edit/': 'posts/create_post.html',
         }
         for url, template in templates.items():
             with self.subTest(url=url):
-                responce = author_auth_client.get(url)
+                responce = PostsUrlsTest.author_auth_client.get(url)
                 self.assertTemplateUsed(responce, template)
