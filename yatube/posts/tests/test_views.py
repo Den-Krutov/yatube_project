@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from ..helpers import LIMIT
 from ..models import Group, Post, User
+from ..forms import PostForm
 
 
 class PostsViewsTest(TestCase):
@@ -66,30 +67,39 @@ class PostsViewsTest(TestCase):
                 )
 
     def test_no_form_pages_show_correct_context(self):
+        form_create = PostForm(None)
+        form_edit = PostForm(None ,instance=PostsViewsTest.post)
+        form_create.is_valid()
+        form_edit.is_valid()
         context_pages = [
             {'page_obj': list(Post.objects.all()[:LIMIT])},
             {'group': PostsViewsTest.group,
              'page_obj': list(PostsViewsTest.group.posts.all()[:LIMIT])},
             {'author': PostsViewsTest.user,
              'page_obj': list(PostsViewsTest.user.posts.all()[:LIMIT])},
-            {'post': Post.objects.get()},
+            {'post': Post.objects.get(id=1)},
+            {'form': form_create},
+            {'form': form_edit},
         ]
         path_context_pages = {
             name: context for name, context in zip(
-                PostsViewsTest.path_names[:len(context_pages)], context_pages
+                PostsViewsTest.path_names, context_pages
             )
         }
         for path_name, context in path_context_pages.items():
+            responce = PostsViewsTest.client.get(
+                PostsViewsTest.paths.get(path_name)
+            )
             for key, expected in context.items():
-                responce = PostsViewsTest.client.get(
-                    PostsViewsTest.paths.get(path_name)
-                )
                 with self.subTest(url=PostsViewsTest.paths.get(path_name),
                                   key=key):
-                    self.assertTrue(responce.context.get(key))
+                    self.assertIsNotNone(
+                        responce.context.get(key),
+                        f'Key {key} not found in context'
+                    )
                     if key == 'page_obj':
                         self.assertEqual(
-                            responce.context.get(key).object_list,
+                            list(responce.context.get(key)),
                             expected
                         )
                     else:
