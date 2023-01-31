@@ -1,13 +1,14 @@
-from django import forms
+from django.core.paginator import Page
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from ..forms import PostForm
 from ..helpers import LIMIT
 from ..models import Group, Post, User
-from ..forms import PostForm
 
 
-class PostsViewsTest(TestCase):
+class ViewsTest(TestCase):
+    # Check paginator
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -24,6 +25,12 @@ class PostsViewsTest(TestCase):
             author=cls.user,
             group=cls.group
         )
+        for i in range(LIMIT):
+            Post.objects.create(
+                text=f'Text {i + 2} post',
+                author=cls.user,
+                group=cls.group
+            )
         cls.path_names = [
             'index',
             'group_list',
@@ -44,7 +51,7 @@ class PostsViewsTest(TestCase):
             name: url for name, url in zip(cls.path_names, cls.urls)
         }
 
-    def test_responce_templates(self):
+    def test_pages_uses_correct_template(self):
         templates = [
             'posts/index.html',
             'posts/group_list.html',
@@ -55,52 +62,50 @@ class PostsViewsTest(TestCase):
         ]
         path_templates = {
             name: template for name, template in zip(
-                PostsViewsTest.path_names, templates
+                ViewsTest.path_names, templates
             )
         }
-        for path_name, url in PostsViewsTest.paths.items():
+        for path_name, url in ViewsTest.paths.items():
             with self.subTest(url=url):
-                responce = PostsViewsTest.client.get(url)
+                responce = ViewsTest.client.get(url)
                 self.assertTemplateUsed(
                     responce,
                     path_templates.get(path_name)
                 )
 
-    def test_no_form_pages_show_correct_context(self):
-        form_create = PostForm(None)
-        form_edit = PostForm(None ,instance=PostsViewsTest.post)
-        form_create.is_valid()
-        form_edit.is_valid()
+    def test_pages_show_correct_context(self):
         context_pages = [
             {'page_obj': list(Post.objects.all()[:LIMIT])},
-            {'group': PostsViewsTest.group,
-             'page_obj': list(PostsViewsTest.group.posts.all()[:LIMIT])},
-            {'author': PostsViewsTest.user,
-             'page_obj': list(PostsViewsTest.user.posts.all()[:LIMIT])},
-            {'post': Post.objects.get(id=1)},
-            {'form': form_create},
-            {'form': form_edit},
+            {'group': ViewsTest.group,
+             'page_obj': list(ViewsTest.group.posts.all()[:LIMIT])},
+            {'author': ViewsTest.user,
+             'page_obj': list(ViewsTest.user.posts.all()[:LIMIT])},
+            {'post': ViewsTest.post},
+            {'form': PostForm()},
+            {'form': PostForm(instance=ViewsTest.post),
+             'is_edit': True},
         ]
         path_context_pages = {
             name: context for name, context in zip(
-                PostsViewsTest.path_names, context_pages
+                ViewsTest.path_names, context_pages
             )
         }
         for path_name, context in path_context_pages.items():
-            responce = PostsViewsTest.client.get(
-                PostsViewsTest.paths.get(path_name)
-            )
+            responce = ViewsTest.client.get(ViewsTest.paths.get(path_name))
             for key, expected in context.items():
-                with self.subTest(url=PostsViewsTest.paths.get(path_name),
-                                  key=key):
-                    self.assertIsNotNone(
-                        responce.context.get(key),
-                        f'Key {key} not found in context'
+                with self.subTest(url=ViewsTest.paths.get(path_name), key=key):
+                    self.assertIn(
+                        key,
+                        responce.context,
+                        f'Key {key} not found in context page'
                     )
-                    if key == 'page_obj':
-                        self.assertEqual(
-                            list(responce.context.get(key)),
-                            expected
-                        )
+                    value = responce.context.get(key)
+                    if key == 'form':
+                        self.assertIsInstance(value, PostForm)
+                        for field in PostForm.declared_fields.keys():
+                            self.assertEqual(value.field, expected.field)
                     else:
-                        self.assertEqual(responce.context.get(key), expected)
+                        if key == 'page_obj':
+                            self.assertIsInstance(value, Page)
+                            value = value.object_list
+                        self.assertEqual(value, expected)
