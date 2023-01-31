@@ -1,3 +1,5 @@
+from math import ceil
+
 from django.core.paginator import Page
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -8,7 +10,6 @@ from ..models import Group, Post, User
 
 
 class ViewsTest(TestCase):
-    # Check paginator
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -109,3 +110,32 @@ class ViewsTest(TestCase):
                             self.assertIsInstance(value, Page)
                             value = value.object_list
                         self.assertEqual(value, expected)
+
+    def test_paginator_pages_contains_correct_number_records(self):
+        all_posts = [
+            Post.objects.all(),
+            ViewsTest.group.posts.all(),
+            ViewsTest.user.posts.all(),
+        ]
+        urls_posts = {
+            url: posts for url, posts in zip(
+                ViewsTest.paths.values(),
+                all_posts
+            )
+        }
+        for url, posts in urls_posts.items():
+            for i in range(ceil(posts.count() / LIMIT)):
+                responce = ViewsTest.client.get(
+                    url + f'?page={i + 1}'
+                )
+                number_objs = posts[i * LIMIT:(i + 1) * LIMIT].count()
+                self.assertEqual(
+                    len(responce.context['page_obj']),
+                    number_objs
+                )
+
+    def test_create_edit_post_show_pages(self):
+        self.assertFalse(True)
+
+    def test_create_edit_post_noshow_pages(self):
+        self.assertFalse(True)
