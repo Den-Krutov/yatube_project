@@ -5,7 +5,7 @@ from django.test import Client, TestCase
 from ..models import Group, Post, User
 
 
-class PostsUrlsTest(TestCase):
+class UrlsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -33,29 +33,29 @@ class PostsUrlsTest(TestCase):
         }
 
     def test_accept_urls_users(self):
-        guest_client = PostsUrlsTest.guest_client
-        post = PostsUrlsTest.post
+        guest_client = UrlsTest.guest_client
+        post = UrlsTest.post
         url_patterns = {
             '/': guest_client,
-            f'/group/{PostsUrlsTest.group.slug}/': guest_client,
+            f'/group/{UrlsTest.group.slug}/': guest_client,
             f'/profile/{post.author.username}/': guest_client,
             f'/posts/{post.pk}/': guest_client,
-            '/create/': PostsUrlsTest.auth_client,
-            f'/posts/{post.pk}/edit/': PostsUrlsTest.author_auth_client,
+            '/create/': UrlsTest.auth_client,
+            f'/posts/{post.pk}/edit/': UrlsTest.author_auth_client,
         }
         for url, client in url_patterns.items():
-            with self.subTest(url=url, obj=PostsUrlsTest.client_names[client]):
+            with self.subTest(url=url, obj=UrlsTest.client_names[client]):
                 responce = client.get(url)
                 self.assertEqual(responce.status_code, HTTPStatus.OK.value)
 
     def test_url_unexisting_page(self):
-        responce = PostsUrlsTest.guest_client.get('/unexisting_page/')
+        responce = UrlsTest.guest_client.get('/unexisting_page/')
         self.assertEqual(responce.status_code, HTTPStatus.NOT_FOUND.value)
 
     def test_redirect_urls_users(self):
-        guest_client = PostsUrlsTest.guest_client
-        auth_client = PostsUrlsTest.auth_client
-        post = PostsUrlsTest.post
+        guest_client = UrlsTest.guest_client
+        auth_client = UrlsTest.auth_client
+        post = UrlsTest.post
         url_patterns = {
             guest_client: ['/create/', f'/posts/{post.pk}/edit/',],
             auth_client: [f'/posts/{post.pk}/edit/',],
@@ -66,7 +66,7 @@ class PostsUrlsTest(TestCase):
         }
         for obj, url_list in url_patterns.items():
             for url in url_list:
-                with self.subTest(obj=PostsUrlsTest.client_names[obj],
+                with self.subTest(obj=UrlsTest.client_names[obj],
                                   url=url):
                     responce = obj.get(url, follow=True)
                     self.assertRedirects(
@@ -75,10 +75,10 @@ class PostsUrlsTest(TestCase):
                     )
 
     def test_responce_templates(self):
-        post = PostsUrlsTest.post
+        post = UrlsTest.post
         templates = {
             '/': 'posts/index.html',
-            f'/group/{PostsUrlsTest.group.slug}/': 'posts/group_list.html',
+            f'/group/{UrlsTest.group.slug}/': 'posts/group_list.html',
             f'/profile/{post.author.username}/': 'posts/profile.html',
             f'/posts/{post.pk}/': 'posts/post_detail.html',
             '/create/': 'posts/create_post.html',
@@ -86,5 +86,5 @@ class PostsUrlsTest(TestCase):
         }
         for url, template in templates.items():
             with self.subTest(url=url):
-                responce = PostsUrlsTest.author_auth_client.get(url)
+                responce = UrlsTest.author_auth_client.get(url)
                 self.assertTemplateUsed(responce, template)

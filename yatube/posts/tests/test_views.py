@@ -14,8 +14,6 @@ class ViewsTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='user')
-        cls.client = Client()
-        cls.client.force_login(cls.user)
         cls.group = Group.objects.create(
             title='test_title',
             slug='test-slug',
@@ -26,12 +24,6 @@ class ViewsTest(TestCase):
             author=cls.user,
             group=cls.group
         )
-        for i in range(LIMIT):
-            Post.objects.create(
-                text=f'Text {i + 2} post',
-                author=cls.user,
-                group=cls.group
-            )
         cls.path_names = [
             'index',
             'group_list',
@@ -52,6 +44,10 @@ class ViewsTest(TestCase):
             name: url for name, url in zip(cls.path_names, cls.urls)
         }
 
+    def setUp(self):
+        self.client = Client()
+        self.client.force_login(ViewsTest.user)
+
     def test_pages_uses_correct_template(self):
         templates = [
             'posts/index.html',
@@ -68,7 +64,7 @@ class ViewsTest(TestCase):
         }
         for path_name, url in ViewsTest.paths.items():
             with self.subTest(url=url):
-                responce = ViewsTest.client.get(url)
+                responce = self.client.get(url)
                 self.assertTemplateUsed(
                     responce,
                     path_templates.get(path_name)
@@ -92,7 +88,7 @@ class ViewsTest(TestCase):
             )
         }
         for path_name, context in path_context_pages.items():
-            responce = ViewsTest.client.get(ViewsTest.paths.get(path_name))
+            responce = self.client.get(ViewsTest.paths.get(path_name))
             for key, expected in context.items():
                 with self.subTest(url=ViewsTest.paths.get(path_name), key=key):
                     self.assertIn(
@@ -112,6 +108,12 @@ class ViewsTest(TestCase):
                         self.assertEqual(value, expected)
 
     def test_paginator_pages_contains_correct_number_records(self):
+        for i in range(LIMIT):
+            Post.objects.create(
+                text=f'Text {i + 2} post',
+                author=ViewsTest.user,
+                group=ViewsTest.group
+            )
         all_posts = [
             Post.objects.all(),
             ViewsTest.group.posts.all(),
@@ -125,7 +127,7 @@ class ViewsTest(TestCase):
         }
         for url, posts in urls_posts.items():
             for i in range(ceil(posts.count() / LIMIT)):
-                responce = ViewsTest.client.get(
+                responce = self.client.get(
                     url + f'?page={i + 1}'
                 )
                 number_objs = posts[i * LIMIT:(i + 1) * LIMIT].count()
@@ -134,8 +136,59 @@ class ViewsTest(TestCase):
                     number_objs
                 )
 
-    def test_create_edit_post_show_pages(self):
-        self.assertFalse(True)
+    def test_create_post_show_pages(self):
+        form_data = {
+            'text': 'Text new post',
+            'group': ViewsTest.group.pk,
+        }
+        self.client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+        )
+        all_posts = [
+            Post.objects.all()[0],
+            ViewsTest.group.posts.all()[0],
+            ViewsTest.user.posts.all()[0],
+        ]
+        urls_posts = {
+            url: posts for url, posts in zip(
+                ViewsTest.urls,
+                all_posts
+            )
+        }
+        for url, expected in urls_posts.items():
+            with self.subTest(url=url):
+                post = self.client.get(url).context['page_obj'][0]
+                self.assertEqual(post, expected)
 
-    def test_create_edit_post_noshow_pages(self):
-        self.assertFalse(True)
+    def test_create_post_noshow_pages(self):
+        other_user = User.objects.create_user(username='other_user')
+        other_client = Client()
+        other_client.force_login(other_user)
+        other_group = Group.objects.create(
+            title='Title other group',
+            slug='Slug other group',
+            description='Description other group',
+        )
+        form_data = {
+            'text': 'Text new post',
+            'group': other_group.pk,
+        }
+        other_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+        )
+        all_posts = [
+            ViewsTest.group.posts.all()[0],
+            ViewsTest.user.posts.all()[0],
+        ]
+        urls_posts = {
+            url: posts for url, posts in zip(
+                ViewsTest.urls[1:],
+                all_posts
+            )
+        }
+        for url, expected in urls_posts.items():
+            with self.subTest(url=url):
+                post = other_client.get(url).context['page_obj'][0]
+                self.assertEqual(post, expected)

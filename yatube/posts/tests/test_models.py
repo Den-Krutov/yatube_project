@@ -3,7 +3,7 @@ from django.test import TestCase
 from ..models import Group, Post, User
 
 
-class PostsGroupModelTest(TestCase):
+class GroupModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -14,8 +14,8 @@ class PostsGroupModelTest(TestCase):
         )
 
     def test_model_have_correct_object_name(self):
-        expected_name = PostsGroupModelTest.group.title
-        self.assertEqual(str(PostsGroupModelTest.group), expected_name)
+        expected_name = GroupModelTest.group.title
+        self.assertEqual(str(GroupModelTest.group), expected_name)
 
     def test_verbose_name(self):
         field_verboses = {
@@ -25,7 +25,7 @@ class PostsGroupModelTest(TestCase):
         for field, expected in field_verboses.items():
             with self.subTest(field=field):
                 self.assertEqual(
-                    (PostsGroupModelTest.group._meta.get_field(field)
+                    (GroupModelTest.group._meta.get_field(field)
                      .verbose_name),
                     expected
                 )
@@ -38,13 +38,13 @@ class PostsGroupModelTest(TestCase):
         for field, expected in field_help_texts.items():
             with self.subTest(field=field):
                 self.assertEqual(
-                    (PostsGroupModelTest.group._meta.get_field(field)
+                    (GroupModelTest.group._meta.get_field(field)
                      .help_text),
                     expected
                 )
 
 
-class PostsPostModelTest(TestCase):
+class PostModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -61,8 +61,8 @@ class PostsPostModelTest(TestCase):
         )
 
     def test_model_have_correct_object_name(self):
-        expected_name = PostsPostModelTest.post.text[:15]
-        self.assertEqual(str(PostsPostModelTest.post), expected_name)
+        expected_name = PostModelTest.post.text[:15]
+        self.assertEqual(str(PostModelTest.post), expected_name)
 
     def test_verbose_name(self):
         field_verboses = {
@@ -74,7 +74,7 @@ class PostsPostModelTest(TestCase):
         for field, expected in field_verboses.items():
             with self.subTest(field=field):
                 self.assertEqual(
-                    (PostsPostModelTest.post._meta.get_field(field)
+                    (PostModelTest.post._meta.get_field(field)
                      .verbose_name),
                     expected
                 )
@@ -87,6 +87,6 @@ class PostsPostModelTest(TestCase):
         for field, expected in field_help_texts.items():
             with self.subTest(field=field):
                 self.assertEqual(
-                    PostsPostModelTest.post._meta.get_field(field).help_text,
+                    PostModelTest.post._meta.get_field(field).help_text,
                     expected
                 )

@@ -1,17 +1,41 @@
 from http import HTTPStatus
 
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from posts.models import User
 
 
-class UsersUrlsTests(TestCase):
+class UrlsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='authUser')
-        cls.path_names = [
+        urls = [
+            'login/',
+            'signup/',
+            'password_change/',
+            'password_change/done/',
+            'password_reset/',
+            'password_reset/done/',
+            'reset/done/',
+            'logout/',
+        ]
+        cls.urls = [
+            '/auth/' + url for url in urls
+        ]
+
+    def setUp(self):
+        self.auth_client = Client()
+        self.auth_client.force_login(UrlsTest.user)
+
+    def test_accepted_urls(self):
+        for url in UrlsTest.urls:
+            with self.subTest(url=url):
+                responce = self.auth_client.get(url)
+                self.assertEqual(responce.status_code, HTTPStatus.OK)
+
+    def test_urls_responce_correct_templates(self):
+        templates_names = [
             'login',
             'signup',
             'password_change',
@@ -21,26 +45,12 @@ class UsersUrlsTests(TestCase):
             'password_reset_complete',
             'logout',
         ]
-
-    def setUp(self):
-        self.auth_client = Client()
-        self.auth_client.force_login(UsersUrlsTests.user)
-
-    def test_accepted_urls(self):
-        for path_name in UsersUrlsTests.path_names:
-            with self.subTest(url=reverse(f'users:{path_name}')):
-                responce = self.auth_client.get(
-                    reverse(f'users:{path_name}')
-                )
-                self.assertEqual(responce.status_code, HTTPStatus.OK.value)
-
-    def test_urls_responce_correct_templates(self):
         template_paths = {
-            path: f'users/{path}.html' for path in UsersUrlsTests.path_names
+            url: f'users/{name}.html' for url, name in zip(
+                UrlsTest.urls, templates_names
+            )
         }
-        for path_name, template in template_paths.items():
-            with self.subTest(url=reverse(f'users:{path_name}')):
-                responce = self.auth_client.get(
-                    reverse(f'users:{path_name}')
-                )
+        for url, template in template_paths.items():
+            with self.subTest(url=url):
+                responce = self.auth_client.get(url)
                 self.assertTemplateUsed(responce, template)
