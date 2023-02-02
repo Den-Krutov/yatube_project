@@ -127,14 +127,15 @@ class ViewsTest(TestCase):
         }
         for url, posts in urls_posts.items():
             for i in range(ceil(posts.count() / LIMIT)):
-                responce = self.client.get(
-                    url + f'?page={i + 1}'
-                )
-                number_objs = posts[i * LIMIT:(i + 1) * LIMIT].count()
-                self.assertEqual(
-                    len(responce.context['page_obj']),
-                    number_objs
-                )
+                with self.subTest(url=url, page=(i + 1)):
+                    responce = self.client.get(
+                        url + f'?page={i + 1}'
+                    )
+                    number_objs = posts[i * LIMIT:(i + 1) * LIMIT].count()
+                    self.assertEqual(
+                        len(responce.context['page_obj']),
+                        number_objs
+                    )
 
     def test_create_post_show_pages(self):
         form_data = {

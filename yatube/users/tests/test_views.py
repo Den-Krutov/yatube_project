@@ -1,7 +1,9 @@
+from django import forms
 from django.test import Client, TestCase
 from django.urls import reverse
 
 from posts.models import User
+from users.forms import CreationForm
 
 
 class ViewsTest(TestCase):
@@ -21,6 +23,7 @@ class ViewsTest(TestCase):
         ]
 
     def setUp(self):
+        self.guest_client = Client()
         self.auth_client = Client()
         self.auth_client.force_login(ViewsTest.user)
 
@@ -35,5 +38,18 @@ class ViewsTest(TestCase):
                 )
                 self.assertTemplateUsed(responce, template)
 
-    def test_signup(self):
-        self.assertTrue(False)
+    def test_signup_uses_correct_context(self):
+        form_fields = {
+            'first_name': forms.fields.CharField,
+            'last_name': forms.fields.CharField,
+            'username': forms.fields.CharField,
+            'email': forms.fields.EmailField,
+        }
+        responce = self.guest_client.get(reverse('users:signup'))
+        self.assertIn('form', responce.context)
+        form = responce.context.get('form')
+        self.assertIsInstance(form, CreationForm)
+        for value, expected in form_fields.items():
+            with self.subTest(value=value):
+                form_field = form.fields.get(value)
+                self.assertIsInstance(form_field, expected)
