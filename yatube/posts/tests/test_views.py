@@ -64,9 +64,9 @@ class ViewsTest(TestCase):
         }
         for path_name, url in ViewsTest.paths.items():
             with self.subTest(url=url):
-                responce = self.client.get(url)
+                response = self.client.get(url)
                 self.assertTemplateUsed(
-                    responce,
+                    response,
                     path_templates.get(path_name)
                 )
 
@@ -88,15 +88,15 @@ class ViewsTest(TestCase):
             )
         }
         for path_name, context in path_context_pages.items():
-            responce = self.client.get(ViewsTest.paths.get(path_name))
+            response = self.client.get(ViewsTest.paths.get(path_name))
             for key, expected in context.items():
                 with self.subTest(url=ViewsTest.paths.get(path_name), key=key):
                     self.assertIn(
                         key,
-                        responce.context,
+                        response.context,
                         f'Key {key} not found in context page'
                     )
-                    value = responce.context.get(key)
+                    value = response.context.get(key)
                     if key == 'form':
                         self.assertIsInstance(value, PostForm)
                         for field in PostForm.declared_fields.keys():
@@ -128,12 +128,12 @@ class ViewsTest(TestCase):
         for url, posts in urls_posts.items():
             for i in range(ceil(posts.count() / LIMIT)):
                 with self.subTest(url=url, page=(i + 1)):
-                    responce = self.client.get(
+                    response = self.client.get(
                         url + f'?page={i + 1}'
                     )
                     number_objs = posts[i * LIMIT:(i + 1) * LIMIT].count()
                     self.assertEqual(
-                        len(responce.context['page_obj']),
+                        len(response.context['page_obj']),
                         number_objs
                     )
 
@@ -164,20 +164,17 @@ class ViewsTest(TestCase):
 
     def test_create_post_noshow_pages(self):
         other_user = User.objects.create_user(username='other_user')
-        other_client = Client()
-        other_client.force_login(other_user)
+        client = self.client
+        client.force_login(other_user)
         other_group = Group.objects.create(
             title='Title other group',
             slug='Slug other group',
             description='Description other group',
         )
-        form_data = {
-            'text': 'Text new post',
-            'group': other_group.pk,
-        }
-        other_client.post(
-            reverse('posts:post_create'),
-            data=form_data,
+        post = Post.objects.create(
+            text='Text new post',
+            author=other_user,
+            group=other_group,
         )
         all_posts = [
             ViewsTest.group.posts.all()[0],
@@ -191,5 +188,5 @@ class ViewsTest(TestCase):
         }
         for url, expected in urls_posts.items():
             with self.subTest(url=url):
-                post = other_client.get(url).context['page_obj'][0]
+                post = client.get(url).context['page_obj'][0]
                 self.assertEqual(post, expected)

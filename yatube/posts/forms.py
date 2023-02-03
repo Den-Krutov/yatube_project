@@ -14,7 +14,7 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = '__all__'
+        fields = ('text', 'group',)
 
     def clean_text(self):
         text = self.cleaned_data['text']
