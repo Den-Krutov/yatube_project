@@ -57,8 +57,8 @@ class UrlsTest(TestCase):
         auth_client = UrlsTest.auth_client
         post = UrlsTest.post
         url_patterns = {
-            guest_client: ['/create/', f'/posts/{post.pk}/edit/',],
-            auth_client: [f'/posts/{post.pk}/edit/',],
+            guest_client: ['/create/', f'/posts/{post.pk}/edit/'],
+            auth_client: [f'/posts/{post.pk}/edit/'],
         }
         expected_url_patterns = {
             guest_client: '/auth/login/?next={url}',

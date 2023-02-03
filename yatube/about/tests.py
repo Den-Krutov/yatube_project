@@ -9,7 +9,7 @@ class UrlsTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.guest_client = Client()
-        cls.urls = ['/about/author/', '/about/tech/',]
+        cls.urls = ['/about/author/', '/about/tech/']
 
     def test_accepted_urls(self):
         for url in UrlsTest.urls:
@@ -18,7 +18,7 @@ class UrlsTest(TestCase):
                 self.assertEqual(responce.status_code, HTTPStatus.OK)
 
     def test_urls_responce_correct_templates(self):
-        templates = ['about/author.html', 'about/tech.html',]
+        templates = ['about/author.html', 'about/tech.html']
         url_templates = {
             url: template for url, template in zip(
                 UrlsTest.urls, templates

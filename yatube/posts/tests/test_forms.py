@@ -55,7 +55,7 @@ class FormsTest(TestCase):
         )
         self.assertRedirects(
             response,
-            reverse('posts:profile', args=[FormsTest.user.username,])
+            reverse('posts:profile', args=[FormsTest.user.username])
         )
         self.assertEqual(Post.objects.count(), posts_count + 1)
 
@@ -76,7 +76,7 @@ class FormsTest(TestCase):
         )
         self.assertRedirects(
             response,
-            reverse('posts:post_detail', args=[post.pk,])
+            reverse('posts:post_detail', args=[post.pk])
         )
         self.assertNotEqual(response.context['post'].text, post.text)
         expected = Post.objects.get(id=post.pk)
