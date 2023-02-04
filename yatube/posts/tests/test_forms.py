@@ -16,12 +16,34 @@ class FormsTest(TestCase):
             slug='test-slug',
             description='test_description',
         )
+        cls.post = Post.objects.create(
+            text='word ' * 5,
+            author=cls.user,
+            group=cls.group
+        )
 
     def setUp(self):
         self.client = Client()
         self.client.force_login(FormsTest.user)
 
-    def test_post_create(self):
+    def test_form_valid_data_creates_post(self):
+        posts_count = Post.objects.count()
+        form_valid_data = {
+            'text': 'New post',
+            'group': FormsTest.group.pk,
+        }
+        response = self.client.post(
+            reverse('posts:post_create'),
+            data=form_valid_data,
+            follow=True
+        )
+        self.assertRedirects(
+            response,
+            reverse('posts:profile', args=[FormsTest.user.username])
+        )
+        self.assertEqual(Post.objects.count(), posts_count + 1)
+
+    def test_form_novalid_data_nocreates_post(self):
         posts_count = Post.objects.count()
         form_novalid_datas = {
             'Пост слишком большой':
@@ -44,40 +66,21 @@ class FormsTest(TestCase):
                     error_str,
                 )
                 self.assertEqual(response.status_code, HTTPStatus.OK)
-        form_valid_data = {
-            'text': 'New post',
-            'group': FormsTest.group.pk,
-        }
-        response = self.client.post(
-            reverse('posts:post_create'),
-            data=form_valid_data,
-            follow=True
-        )
-        self.assertRedirects(
-            response,
-            reverse('posts:profile', args=[FormsTest.user.username])
-        )
-        self.assertEqual(Post.objects.count(), posts_count + 1)
 
     def test_post_edit(self):
-        post = Post.objects.create(
-            text='word ' * 5,
-            author=FormsTest.user,
-            group=FormsTest.group
-        )
         form_valid_data = {
             'text': 'New post',
             'group': FormsTest.group.pk,
         }
         response = self.client.post(
-            reverse('posts:post_edit', args=[post.pk]),
+            reverse('posts:post_edit', args=[FormsTest.post.pk]),
             data=form_valid_data,
             follow=True
         )
         self.assertRedirects(
             response,
-            reverse('posts:post_detail', args=[post.pk])
+            reverse('posts:post_detail', args=[FormsTest.post.pk])
         )
-        self.assertNotEqual(response.context['post'].text, post.text)
-        expected = Post.objects.get(id=post.pk)
+        self.assertNotEqual(response.context['post'].text, FormsTest.post.text)
+        expected = Post.objects.get(id=FormsTest.post.pk)
         self.assertEqual(response.context['post'].text, expected.text)

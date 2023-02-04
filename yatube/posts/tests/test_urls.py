@@ -45,12 +45,12 @@ class UrlsTest(TestCase):
         }
         for url, client in url_patterns.items():
             with self.subTest(url=url, obj=UrlsTest.client_names[client]):
-                responce = client.get(url)
-                self.assertEqual(responce.status_code, HTTPStatus.OK.value)
+                response = client.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.OK.value)
 
     def test_url_unexisting_page(self):
-        responce = UrlsTest.guest_client.get('/unexisting_page/')
-        self.assertEqual(responce.status_code, HTTPStatus.NOT_FOUND.value)
+        response = UrlsTest.guest_client.get('/unexisting_page/')
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND.value)
 
     def test_redirect_urls_users(self):
         guest_client = UrlsTest.guest_client
@@ -68,13 +68,13 @@ class UrlsTest(TestCase):
             for url in url_list:
                 with self.subTest(obj=UrlsTest.client_names[obj],
                                   url=url):
-                    responce = obj.get(url, follow=True)
+                    response = obj.get(url, follow=True)
                     self.assertRedirects(
-                        responce,
+                        response,
                         expected_url_patterns.get(obj).format(url=url)
                     )
 
-    def test_responce_templates(self):
+    def test_response_templates(self):
         post = UrlsTest.post
         templates = {
             '/': 'posts/index.html',
@@ -86,5 +86,5 @@ class UrlsTest(TestCase):
         }
         for url, template in templates.items():
             with self.subTest(url=url):
-                responce = UrlsTest.author_auth_client.get(url)
-                self.assertTemplateUsed(responce, template)
+                response = UrlsTest.author_auth_client.get(url)
+                self.assertTemplateUsed(response, template)
