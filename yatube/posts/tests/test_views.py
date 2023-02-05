@@ -55,6 +55,7 @@ class ViewsTest(TestCase):
         cls.paths = {
             name: url for name, url in zip(cls.path_names, cls.urls)
         }
+        cls.key_error_message = 'Key "{key}" not found in context page'
         Post.objects.bulk_create(
             Post(
                 text=f'Text {i + 2} post',
@@ -88,70 +89,65 @@ class ViewsTest(TestCase):
                     path_templates.get(path_name)
                 )
 
-    def _test_page_obj_context(self, value, expected):
+    def _test_page_obj_context(self, response, expected):
+        self.assertIn(
+            'page_obj',
+            response.context,
+            ViewsTest.key_error_message.format(key='page_obj')
+        )
+        value = response.context.get('page_obj')
         self.assertIsInstance(value, Page)
         self.assertEqual(value.object_list, expected)
 
     def test_index_page_show_correct_context(self):
         expected = list(Post.objects.all()[:LIMIT])
         response = self.client.get(ViewsTest.paths.get('index'))
-        self.assertIn(
-            'page_obj',
-            response.context,
-            'Key "page_obj" not found in context page'
-        )
-        self._test_page_obj_context(response.context.get('page_obj'), expected)
+        self._test_page_obj_context(response, expected)
 
     def test_group_page_show_correct_context(self):
-        context = {
-            'group': ViewsTest.group,
-            'page_obj': list(ViewsTest.group.posts.all()[:LIMIT])
-        }
         response = self.client.get(ViewsTest.paths.get('group_list'))
-        for key, expected in context.items():
-            self.assertIn(
-                key,
-                response.context,
-                f'Key {key} not found in context page'
-            )
-            value = response.context.get(key)
-            if key == 'page_obj':
-                self._test_page_obj_context(value, expected)
-            else:
-                self.assertEqual(value, expected)
+        expected = list(ViewsTest.group.posts.all()[:LIMIT])
+        self._test_page_obj_context(response, expected)
+        self.assertIn(
+            'group',
+            response.context,
+            ViewsTest.key_error_message.format(key='group')
+        )
+        self.assertEqual(response.context.get('group'), ViewsTest.group)
 
     def test_profile_page_show_correct_context(self):
-        context = {
-            'author': ViewsTest.user,
-            'page_obj': list(ViewsTest.group.posts.all()[:LIMIT])
-        }
         response = self.client.get(ViewsTest.paths.get('profile'))
-        for key, expected in context.items():
-            self.assertIn(
-                key,
-                response.context,
-                f'Key {key} not found in context page'
-            )
-            value = response.context.get(key)
-            if key == 'page_obj':
-                self._test_page_obj_context(value, expected)
-            else:
-                self.assertEqual(value, expected)
+        self._test_page_obj_context(
+            response,
+            list(ViewsTest.user.posts.all()[:LIMIT])
+        )
+        self.assertIn(
+            'author',
+            response.context,
+            ViewsTest.key_error_message.format(key='author')
+        )
+        self.assertEqual(response.context.get('author'), ViewsTest.user)
 
     def test_post_detail_page_show_correct_context(self):
         response = self.client.get(ViewsTest.paths.get('post_detail'))
         self.assertIn(
             'post',
             response.context,
-            'Key "post" not found in context page'
+            ViewsTest.key_error_message.format(key='post')
         )
         self.assertEqual(response.context.get('post'), ViewsTest.post)
 
-    def _test_form_context(self, form):
+    def _test_form_context(self, response):
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
         }
+        self.assertIn(
+            'form',
+            response.context,
+            ViewsTest.key_error_message.format(key='form')
+        )
+        form = response.context.get('form')
         self.assertIsInstance(form, PostForm)
         for field_name, field_type in form_fields.items():
             with self.subTest(field_name=field_name):
@@ -159,30 +155,17 @@ class ViewsTest(TestCase):
 
     def test_create_post_page_show_correct_context(self):
         response = self.client.get(ViewsTest.paths.get('post_create'))
-        self.assertIn(
-            'form',
-            response.context,
-            'Key "form" not found in context page'
-        )
-        self._test_form_context(response.context.get('form'))
+        self._test_form_context(response)
 
     def test_post_edit_page_show_correct_context(self):
-        context = {
-            'form': PostForm(instance=ViewsTest.post),
-            'is_edit': True
-        }
         response = self.client.get(ViewsTest.paths.get('post_edit'))
-        for key, expected in context.items():
-            self.assertIn(
-                key,
-                response.context,
-                f'Key {key} not found in context page'
-            )
-            value = response.context.get(key)
-            if key == 'form':
-                self._test_form_context(response.context.get(key))
-            else:
-                self.assertEqual(value, expected)
+        self._test_form_context(response)
+        self.assertIn(
+            'is_edit',
+            response.context,
+            ViewsTest.key_error_message.format(key='is_edit')
+        )
+        self.assertTrue(response.context.get('is_edit'))
 
     def test_paginator_pages_contains_correct_number_records(self):
         all_posts = [
