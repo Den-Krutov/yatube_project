@@ -23,6 +23,19 @@ class FormsTest(TestCase):
             slug='test-slug',
             description='test_description',
         )
+        cls.post = Post.objects.create(
+            text='word ' * 5,
+            author=cls.user,
+            group=cls.group,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
+    def setUp(self):
+        self.client.force_login(FormsTest.user)
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x01\x00'
             b'\x01\x00\x00\x00\x00\x21\xf9\x04'
@@ -35,31 +48,17 @@ class FormsTest(TestCase):
             content=small_gif,
             content_type='image/gif'
         )
-        cls.post = Post.objects.create(
-            text='word ' * 5,
-            author=cls.user,
-            group=cls.group,
-            image=uploaded,
-        )
-        cls.form_data = {
+        self.form_data = {
             'text': 'New post',
-            'group': cls.group.pk,
+            'group': FormsTest.group.pk,
             'image': uploaded,
         }
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
-
-    def setUp(self):
-        self.client.force_login(FormsTest.user)
 
     def test_form_valid_data_creates_post(self):
         posts_count = Post.objects.count()
         response = self.client.post(
             reverse('posts:post_create'),
-            data=FormsTest.form_data,
+            data=self.form_data,
             follow=True
         )
         self.assertRedirects(
@@ -95,7 +94,7 @@ class FormsTest(TestCase):
     def test_post_edit(self):
         response = self.client.post(
             reverse('posts:post_edit', args=[FormsTest.post.pk]),
-            data=FormsTest.form_data,
+            data=self.form_data,
             follow=True
         )
         self.assertRedirects(
