@@ -1,15 +1,22 @@
+import shutil
+import tempfile
 from math import ceil
 
 from django import forms
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.paginator import Page
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from ..forms import PostForm
 from ..helpers import LIMIT
 from ..models import Group, Post, User
 
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class ViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -26,10 +33,23 @@ class ViewsTest(TestCase):
             slug='slug-other-group',
             description='Description other group',
         )
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00'
+            b'\x01\x00\x00\x00\x00\x21\xf9\x04'
+            b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
+            b'\x00\x00\x01\x00\x01\x00\x00\x02'
+            b'\x02\x4c\x01\x00\x3b'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
         cls.post = Post.objects.create(
             text='word ' * 5,
             author=cls.user,
-            group=cls.group
+            group=cls.group,
+            image=uploaded,
         )
         cls.other_post = Post.objects.create(
             text='Text new post',
@@ -63,6 +83,16 @@ class ViewsTest(TestCase):
                 group=cls.group
             ) for i in range(LIMIT)
         )
+        cls.form_fields = {
+            'text': forms.fields.CharField,
+            'group': forms.fields.ChoiceField,
+            'image': forms.fields.ImageField,
+        }
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
         self.client.force_login(ViewsTest.user)
@@ -138,10 +168,6 @@ class ViewsTest(TestCase):
         self.assertEqual(response.context.get('post'), ViewsTest.post)
 
     def _test_form_context(self, response):
-        form_fields = {
-            'text': forms.fields.CharField,
-            'group': forms.fields.ChoiceField,
-        }
         self.assertIn(
             'form',
             response.context,
@@ -149,7 +175,7 @@ class ViewsTest(TestCase):
         )
         form = response.context.get('form')
         self.assertIsInstance(form, PostForm)
-        for field_name, field_type in form_fields.items():
+        for field_name, field_type in ViewsTest.form_fields.items():
             with self.subTest(field_name=field_name):
                 self.assertIsInstance(form.fields.get(field_name), field_type)
 

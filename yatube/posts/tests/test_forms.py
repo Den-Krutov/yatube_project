@@ -1,11 +1,18 @@
+import shutil
+import tempfile
 from http import HTTPStatus
 
-from django.test import Client, TestCase
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from ..models import Group, Post, User
 
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class FormsTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -16,25 +23,43 @@ class FormsTest(TestCase):
             slug='test-slug',
             description='test_description',
         )
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00'
+            b'\x01\x00\x00\x00\x00\x21\xf9\x04'
+            b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
+            b'\x00\x00\x01\x00\x01\x00\x00\x02'
+            b'\x02\x4c\x01\x00\x3b'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
         cls.post = Post.objects.create(
             text='word ' * 5,
             author=cls.user,
-            group=cls.group
+            group=cls.group,
+            image=uploaded,
         )
+        cls.form_data = {
+            'text': 'New post',
+            'group': cls.group.pk,
+            'image': uploaded,
+        }
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
-        self.client = Client()
         self.client.force_login(FormsTest.user)
 
     def test_form_valid_data_creates_post(self):
         posts_count = Post.objects.count()
-        form_valid_data = {
-            'text': 'New post',
-            'group': FormsTest.group.pk,
-        }
         response = self.client.post(
             reverse('posts:post_create'),
-            data=form_valid_data,
+            data=FormsTest.form_data,
             follow=True
         )
         self.assertRedirects(
@@ -68,13 +93,9 @@ class FormsTest(TestCase):
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_post_edit(self):
-        form_valid_data = {
-            'text': 'New post',
-            'group': FormsTest.group.pk,
-        }
         response = self.client.post(
             reverse('posts:post_edit', args=[FormsTest.post.pk]),
-            data=form_valid_data,
+            data=FormsTest.form_data,
             follow=True
         )
         self.assertRedirects(

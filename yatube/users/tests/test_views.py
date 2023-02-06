@@ -23,7 +23,6 @@ class ViewsTest(TestCase):
         ]
 
     def setUp(self):
-        self.guest_client = Client()
         self.auth_client = Client()
         self.auth_client.force_login(ViewsTest.user)
 
@@ -45,7 +44,7 @@ class ViewsTest(TestCase):
             'username': forms.fields.CharField,
             'email': forms.fields.EmailField,
         }
-        responce = self.guest_client.get(reverse('users:signup'))
+        responce = self.client.get(reverse('users:signup'))
         self.assertIn('form', responce.context)
         form = responce.context.get('form')
         self.assertIsInstance(form, CreationForm)

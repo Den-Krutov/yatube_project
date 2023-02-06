@@ -48,11 +48,18 @@ class Post(models.Model):
         blank=True,
         null=True
     )
+    image = models.ImageField(
+        'Картинка',
+        upload_to='posts/',
+        blank=True,
+    )
 
     class Meta:
         """Sorted all posts by date."""
 
         ordering = ('-pub_date',)
+        verbose_name = 'Пост'
+        verbose_name_plural = 'Посты'
 
     def __str__(self) -> str:
         return self.text[:15]
