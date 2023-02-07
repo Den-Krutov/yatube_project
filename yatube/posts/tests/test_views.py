@@ -4,6 +4,7 @@ from math import ceil
 
 from django import forms
 from django.conf import settings
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.paginator import Page
 from django.test import TestCase, override_settings
@@ -110,6 +111,7 @@ class ViewsTest(TestCase):
 
     def setUp(self):
         self.client.force_login(ViewsTest.user)
+        cache.clear()
 
     def test_pages_uses_correct_template(self):
         templates = [
@@ -286,3 +288,11 @@ class ViewsTest(TestCase):
             reverse('posts:post_detail', args=[ViewsTest.other_post.pk]),
         )
         self.assertEqual(response.context['comments'].first(), expected)
+
+    def test_cache_delete_post_index(self):
+        url = ViewsTest.paths.get('index')
+        response_old = self.client.get(url)
+        Post.objects.first().delete()
+        self.assertEqual(self.client.get(url).content, response_old.content)
+        cache.clear()
+        self.assertNotEqual(self.client.get(url).content, response_old.content)

@@ -1,17 +1,15 @@
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import TestCase
 from django.urls import reverse
 
 User = get_user_model()
 
 
 class FormsTest(TestCase):
-    def setUp(self):
-        self.client = Client()
-
-    def test_signup(self):
-        users_count = User.objects.count()
-        form_data = {
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.form_data = {
             'first_name': 'test first name',
             'last_name': 'test last name',
             'username': 'test_username',
@@ -19,9 +17,12 @@ class FormsTest(TestCase):
             'password1': 'asdfjkl;1',
             'password2': 'asdfjkl;1',
         }
+
+    def test_signup(self):
+        users_count = User.objects.count()
         response = self.client.post(
             reverse('users:signup'),
-            data=form_data,
+            data=FormsTest.form_data,
             follow=True
         )
         self.assertRedirects(

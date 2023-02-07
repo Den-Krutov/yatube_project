@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+from django.core.cache import cache
 from django.test import Client, TestCase
 
 from ..models import Group, Post, User
@@ -32,6 +33,9 @@ class UrlsTest(TestCase):
             cls.author_auth_client: 'authorAuthClient',
         }
 
+    def setUp(self):
+        cache.clear()
+
     def test_accept_urls_users(self):
         guest_client = UrlsTest.guest_client
         post = UrlsTest.post
@@ -46,11 +50,7 @@ class UrlsTest(TestCase):
         for url, client in url_patterns.items():
             with self.subTest(url=url, obj=UrlsTest.client_names[client]):
                 response = client.get(url)
-                self.assertEqual(response.status_code, HTTPStatus.OK.value)
-
-    def test_url_unexisting_page(self):
-        response = UrlsTest.guest_client.get('/unexisting_page/')
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND.value)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_redirect_urls_users(self):
         guest_client = UrlsTest.guest_client

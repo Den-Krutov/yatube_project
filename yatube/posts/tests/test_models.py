@@ -66,8 +66,7 @@ class PostModelTest(TestCase):
 
     def test_verbose_name(self):
         field_verboses = {
-            'text': 'Текст поста',
-            'pub_date': 'Дата публикации',
+            'text': 'Текст',
             'author': 'Автор',
             'group': 'Группа',
             'image': 'Картинка',
@@ -112,8 +111,7 @@ class CommentModelTest(TestCase):
         field_verboses = {
             'post': 'Пост',
             'author': 'Автор',
-            'text': 'Текст комментария',
-            'created': 'Дата публикации',
+            'text': 'Текст',
         }
         for field, expected in field_verboses.items():
             with self.subTest(field=field):
@@ -126,5 +124,5 @@ class CommentModelTest(TestCase):
     def test_help_text(self):
         self.assertEqual(
             CommentModelTest.comment._meta.get_field('text').help_text,
-            'Введите текст комментария'
+            'Текст нового комментария'
         )

@@ -3,12 +3,16 @@ from functools import partial
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.cache import cache_page
 
 from .forms import CommentForm, PostForm
 from .helpers import get_page_obj
 from .models import Comment, Group, Post, User
 
+CACHE_PAGE_TIMEOUT = 20
 
+
+@cache_page(CACHE_PAGE_TIMEOUT, key_prefix='index_page')
 def index(request):
     """Display all posts."""
     posts = Post.objects.prefetch_related('author', 'group')
