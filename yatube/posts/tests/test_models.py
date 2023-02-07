@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from ..models import Group, Post, User
+from ..models import Comment, Group, Post, User
 
 
 class GroupModelTest(TestCase):
@@ -70,6 +70,7 @@ class PostModelTest(TestCase):
             'pub_date': 'Дата публикации',
             'author': 'Автор',
             'group': 'Группа',
+            'image': 'Картинка',
         }
         for field, expected in field_verboses.items():
             with self.subTest(field=field):
@@ -90,3 +91,40 @@ class PostModelTest(TestCase):
                     PostModelTest.post._meta.get_field(field).help_text,
                     expected
                 )
+
+
+class CommentModelTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='test_name')
+        cls.post = Post.objects.create(
+            text='Text post',
+            author=cls.user,
+        )
+        cls.comment = Comment.objects.create(
+            post=cls.post,
+            author=cls.user,
+            text='Text comment',
+        )
+
+    def test_verbose_name(self):
+        field_verboses = {
+            'post': 'Пост',
+            'author': 'Автор',
+            'text': 'Текст комментария',
+            'created': 'Дата публикации',
+        }
+        for field, expected in field_verboses.items():
+            with self.subTest(field=field):
+                self.assertEqual(
+                    (CommentModelTest.comment._meta.get_field(field)
+                     .verbose_name),
+                    expected
+                )
+
+    def test_help_text(self):
+        self.assertEqual(
+            CommentModelTest.comment._meta.get_field('text').help_text,
+            'Введите текст комментария'
+        )

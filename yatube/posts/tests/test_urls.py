@@ -10,11 +10,11 @@ class UrlsTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.guest_client = Client()
-        cls.user = User.objects.create_user(username='authUser')
         cls.auth_client = Client()
-        cls.auth_client.force_login(cls.user)
-        cls.author_user = User.objects.create_user(username='authorAuthUser')
         cls.author_auth_client = Client()
+        cls.user = User.objects.create_user(username='authUser')
+        cls.author_user = User.objects.create_user(username='authorAuthUser')
+        cls.auth_client.force_login(cls.user)
         cls.author_auth_client.force_login(cls.author_user)
         cls.group = Group.objects.create(
             title='test_title',
@@ -57,8 +57,16 @@ class UrlsTest(TestCase):
         auth_client = UrlsTest.auth_client
         post = UrlsTest.post
         url_patterns = {
-            guest_client: ['/create/', f'/posts/{post.pk}/edit/'],
-            auth_client: [f'/posts/{post.pk}/edit/'],
+            guest_client: (
+                [
+                    '/create/',
+                    f'/posts/{post.pk}/edit/',
+                    f'/posts/{post.pk}/comment/',
+                ]
+            ),
+            auth_client: (
+                [f'/posts/{post.pk}/edit/', f'/posts/{post.pk}/comment/']
+            ),
         }
         expected_url_patterns = {
             guest_client: '/auth/login/?next={url}',

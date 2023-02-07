@@ -9,9 +9,9 @@ from django.core.paginator import Page
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from ..forms import PostForm
+from ..forms import CommentForm, PostForm
 from ..helpers import LIMIT
-from ..models import Group, Post, User
+from ..models import Comment, Group, Post, User
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -56,6 +56,11 @@ class ViewsTest(TestCase):
             author=cls.other_user,
             group=cls.other_group,
         )
+        cls.comment = Comment.objects.create(
+            post=cls.post,
+            author=cls.user,
+            text='Text new comment',
+        )
         cls.path_names = [
             'index',
             'group_list',
@@ -84,9 +89,18 @@ class ViewsTest(TestCase):
             ) for i in range(LIMIT)
         )
         cls.form_fields = {
-            'text': forms.fields.CharField,
-            'group': forms.fields.ChoiceField,
-            'image': forms.fields.ImageField,
+            PostForm: (
+                {
+                    'text': forms.fields.CharField,
+                    'group': forms.fields.ChoiceField,
+                    'image': forms.fields.ImageField,
+                }
+            ),
+            CommentForm: (
+                {
+                    'text': forms.fields.CharField,
+                }
+            ),
         }
 
     @classmethod
@@ -129,6 +143,18 @@ class ViewsTest(TestCase):
         self.assertIsInstance(value, Page)
         self.assertEqual(value.object_list, expected)
 
+    def _test_form_context(self, response, ClassForm):
+        self.assertIn(
+            'form',
+            response.context,
+            ViewsTest.key_error_message.format(key='form')
+        )
+        form = response.context.get('form')
+        self.assertIsInstance(form, ClassForm)
+        for name, type in ViewsTest.form_fields.get(ClassForm).items():
+            with self.subTest(field_name=name):
+                self.assertIsInstance(form.fields.get(name), type)
+
     def test_index_page_show_correct_context(self):
         expected = list(Post.objects.all()[:LIMIT])
         response = self.client.get(ViewsTest.paths.get('index'))
@@ -166,26 +192,24 @@ class ViewsTest(TestCase):
             ViewsTest.key_error_message.format(key='post')
         )
         self.assertEqual(response.context.get('post'), ViewsTest.post)
-
-    def _test_form_context(self, response):
+        self._test_form_context(response, CommentForm)
         self.assertIn(
-            'form',
+            'comments',
             response.context,
-            ViewsTest.key_error_message.format(key='form')
+            ViewsTest.key_error_message.format(key='comments')
         )
-        form = response.context.get('form')
-        self.assertIsInstance(form, PostForm)
-        for field_name, field_type in ViewsTest.form_fields.items():
-            with self.subTest(field_name=field_name):
-                self.assertIsInstance(form.fields.get(field_name), field_type)
+        self.assertEqual(
+            list(response.context.get('comments')),
+            list(Comment.objects.filter(post=ViewsTest.post))
+        )
 
     def test_create_post_page_show_correct_context(self):
         response = self.client.get(ViewsTest.paths.get('post_create'))
-        self._test_form_context(response)
+        self._test_form_context(response, PostForm)
 
     def test_post_edit_page_show_correct_context(self):
         response = self.client.get(ViewsTest.paths.get('post_edit'))
-        self._test_form_context(response)
+        self._test_form_context(response, PostForm)
         self.assertIn(
             'is_edit',
             response.context,
@@ -250,3 +274,15 @@ class ViewsTest(TestCase):
             with self.subTest(url=url):
                 post = self.client.get(url).context['page_obj'][0]
                 self.assertEqual(post, expected)
+
+    def test_comment_show_on_post(self):
+        expected = Comment.objects.filter(post=ViewsTest.post).first()
+        response = self.client.get(ViewsTest.paths.get('post_detail'))
+        self.assertEqual(response.context['comments'][0], expected)
+
+    def test_comment_noshow_on_other_post(self):
+        expected = Comment.objects.filter(post=ViewsTest.other_post).first()
+        response = self.client.get(
+            reverse('posts:post_detail', args=[ViewsTest.other_post.pk]),
+        )
+        self.assertEqual(response.context['comments'].first(), expected)
