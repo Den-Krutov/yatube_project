@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}Последние обновления на сайте{% endblock  %}
+{% block title %}Последние обновления авторов{% endblock  %}
 {% block header %}
-  {% include 'posts/includes/switcher.html' with index=True %}
-  <h1>Это главная страница проекта Yatube</h1>
+  {% include 'posts/includes/switcher.html' with follow=True %}
+  <h1>Избранные авторы</h1>
 {% endblock header %}
 {% block content %}
   {% for post in page_obj %}

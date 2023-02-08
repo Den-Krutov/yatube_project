@@ -7,7 +7,7 @@ from django.views.decorators.cache import cache_page
 
 from .forms import CommentForm, PostForm
 from .helpers import get_page_obj
-from .models import Comment, Group, Post, User
+from .models import Follow, Group, Post, User
 
 CACHE_PAGE_TIMEOUT = 20
 
@@ -18,6 +18,14 @@ def index(request):
     posts = Post.objects.prefetch_related('author', 'group')
     return render(request,
                   'posts/index.html',
+                  context={'page_obj': get_page_obj(request, posts)})
+
+
+@login_required
+def follow_index(request):
+    posts = Post.objects.filter(author__following__user=request.user)
+    return render(request,
+                  'posts/follow.html',
                   context={'page_obj': get_page_obj(request, posts)})
 
 
@@ -34,17 +42,45 @@ def group_posts(request, slug):
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     posts = author.posts.select_related('group')
+    following = bool(
+        author.following.filter(user=request.user) or author == request.user
+    )
     return render(request,
                   'posts/profile.html',
                   context={'author': author,
+                           'following': following,
                            'page_obj': get_page_obj(request, posts)})
+
+
+@login_required
+def profile_follow(request, username):
+    author = get_object_or_404(User, username=username)
+    get_redirected_page = partial(redirect,
+                                  'posts:profile',
+                                  username=username)
+    if author == request.user:
+        return get_redirected_page()
+    Follow.objects.get_or_create(user=request.user, author=author)
+    return get_redirected_page()
+
+
+@login_required
+def profile_unfollow(request, username):
+    author = get_object_or_404(User, username=username)
+    get_redirected_page = partial(redirect,
+                                  'posts:profile',
+                                  username=username)
+    if author == request.user:
+        return get_redirected_page()
+    Follow.objects.filter(user=request.user, author=author).delete()
+    return get_redirected_page()
 
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post.objects.select_related('author', 'group'),
                              pk=post_id)
     form = CommentForm()
-    comments = Comment.objects.select_related('author').filter(post=post)
+    comments = post.comments.select_related('author')
     return render(request,
                   'posts/post_detail.html',
                   context={'post': post,
