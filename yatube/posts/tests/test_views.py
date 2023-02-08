@@ -7,12 +7,12 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.paginator import Page
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from ..forms import CommentForm, PostForm
 from ..helpers import LIMIT
-from ..models import Comment, Group, Post, User
+from ..models import Comment, Follow, Group, Post, User
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -62,6 +62,10 @@ class ViewsTest(TestCase):
             author=cls.user,
             text='Text new comment',
         )
+        cls.follow = Follow.objects.create(
+            user=cls.user,
+            author=cls.other_user,
+        )
         cls.path_names = [
             'index',
             'group_list',
@@ -110,7 +114,9 @@ class ViewsTest(TestCase):
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
+        self.other_client = Client()
         self.client.force_login(ViewsTest.user)
+        self.other_client.force_login(ViewsTest.other_user)
         cache.clear()
 
     def test_pages_uses_correct_template(self):
@@ -185,6 +191,12 @@ class ViewsTest(TestCase):
             ViewsTest.key_error_message.format(key='author')
         )
         self.assertEqual(response.context.get('author'), ViewsTest.user)
+        self.assertIn(
+            'following',
+            response.context,
+            ViewsTest.key_error_message.format(key='following')
+        )
+        self.assertFalse(response.context.get('following'))
 
     def test_post_detail_page_show_correct_context(self):
         response = self.client.get(ViewsTest.paths.get('post_detail'))
@@ -296,3 +308,13 @@ class ViewsTest(TestCase):
         self.assertEqual(self.client.get(url).content, response_old.content)
         cache.clear()
         self.assertNotEqual(self.client.get(url).content, response_old.content)
+
+    def test_post_user_show_on_index_follow_page_follower(self):
+        expected = ViewsTest.other_user.posts.first()
+        response = self.client.get(reverse('posts:follow_index'))
+        self.assertIn(expected, response.context['page_obj'])
+
+    def test_post_user_noshow_on_index_follow_page_nofollower(self):
+        expected = ViewsTest.user.posts.first()
+        response = self.other_client.get(reverse('posts:follow_index'))
+        self.assertNotEqual(expected, response.context['page_obj'])

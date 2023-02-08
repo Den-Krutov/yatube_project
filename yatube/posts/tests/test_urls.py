@@ -41,6 +41,7 @@ class UrlsTest(TestCase):
         post = UrlsTest.post
         url_patterns = {
             '/': guest_client,
+            '/follow/': UrlsTest.auth_client,
             f'/group/{UrlsTest.group.slug}/': guest_client,
             f'/profile/{post.author.username}/': guest_client,
             f'/posts/{post.pk}/': guest_client,
@@ -52,35 +53,43 @@ class UrlsTest(TestCase):
                 response = client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_redirect_urls_users(self):
-        guest_client = UrlsTest.guest_client
-        auth_client = UrlsTest.auth_client
+    def test_redirect_guest_correct(self):
         post = UrlsTest.post
-        url_patterns = {
-            guest_client: (
-                [
-                    '/create/',
-                    f'/posts/{post.pk}/edit/',
-                    f'/posts/{post.pk}/comment/',
-                ]
-            ),
-            auth_client: (
-                [f'/posts/{post.pk}/edit/', f'/posts/{post.pk}/comment/']
-            ),
+        urls = [
+            '/follow/',
+            '/create/',
+            f'/posts/{post.pk}/edit/',
+            f'/posts/{post.pk}/comment/',
+            f'/profile/{post.author.username}/follow/',
+            f'/profile/{post.author.username}/unfollow/',
+        ]
+        expected = '/auth/login/?next={url}'
+        for url in urls:
+            with self.subTest(url=url):
+                response = UrlsTest.guest_client.get(url, follow=True)
+                self.assertRedirects(
+                    response,
+                    expected.format(url=url)
+                )
+
+    def test_redirect_auth_user_correct(self):
+        post = UrlsTest.post
+        url_expected = {
+            f'/posts/{post.pk}/edit/': f'/posts/{post.pk}/',
+            f'/posts/{post.pk}/comment/': f'/posts/{post.pk}/',
+            f'/profile/{post.author.username}/follow/':
+                f'/profile/{post.author.username}/',
+            f'/profile/{post.author.username}/unfollow/':
+                f'/profile/{post.author.username}/',
         }
-        expected_url_patterns = {
-            guest_client: '/auth/login/?next={url}',
-            auth_client: f'/posts/{post.pk}/',
-        }
-        for obj, url_list in url_patterns.items():
-            for url in url_list:
-                with self.subTest(obj=UrlsTest.client_names[obj],
-                                  url=url):
-                    response = obj.get(url, follow=True)
-                    self.assertRedirects(
-                        response,
-                        expected_url_patterns.get(obj).format(url=url)
-                    )
+        expected = '/auth/login/?next={url}'
+        for url, expected in url_expected.items():
+            with self.subTest(url=url):
+                response = UrlsTest.auth_client.get(url, follow=True)
+                self.assertRedirects(
+                    response,
+                    expected,
+                )
 
     def test_response_templates(self):
         post = UrlsTest.post
