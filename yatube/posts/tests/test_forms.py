@@ -7,7 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from ..models import Group, Post, User
+from ..models import Comment, Group, Post, User
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -48,17 +48,37 @@ class FormsTest(TestCase):
             content=small_gif,
             content_type='image/gif'
         )
-        self.form_data = {
+        self.post_form_data = {
             'text': 'New post',
             'group': FormsTest.group.pk,
             'image': uploaded,
         }
+        self.comment_form_data = {
+            'text': 'New comment',
+        }
 
-    def test_form_valid_data_creates_post(self):
+    def test_comment_form_creates_comment(self):
+        post = FormsTest.post
+        comments_count = Comment.objects.filter(post=post).count()
+        response = self.client.post(
+            reverse('posts:add_comment', args=[post.pk]),
+            data=self.comment_form_data,
+            follow=True
+        )
+        self.assertRedirects(
+            response,
+            reverse('posts:post_detail', args=[post.pk])
+        )
+        self.assertEqual(
+            Comment.objects.filter(post=post).count(),
+            comments_count + 1
+        )
+
+    def test_post_form_valid_data_creates_post(self):
         posts_count = Post.objects.count()
         response = self.client.post(
             reverse('posts:post_create'),
-            data=self.form_data,
+            data=self.post_form_data,
             follow=True
         )
         self.assertRedirects(
@@ -67,7 +87,7 @@ class FormsTest(TestCase):
         )
         self.assertEqual(Post.objects.count(), posts_count + 1)
 
-    def test_form_novalid_data_nocreates_post(self):
+    def test_post_form_novalid_data_nocreates_post(self):
         posts_count = Post.objects.count()
         form_novalid_datas = {
             'Пост слишком большой':
@@ -94,7 +114,7 @@ class FormsTest(TestCase):
     def test_post_edit(self):
         response = self.client.post(
             reverse('posts:post_edit', args=[FormsTest.post.pk]),
-            data=self.form_data,
+            data=self.post_form_data,
             follow=True
         )
         self.assertRedirects(

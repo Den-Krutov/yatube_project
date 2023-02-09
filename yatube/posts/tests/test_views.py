@@ -318,3 +318,54 @@ class ViewsTest(TestCase):
         expected = ViewsTest.user.posts.first()
         response = self.other_client.get(reverse('posts:follow_index'))
         self.assertNotEqual(expected, response.context['page_obj'])
+
+    def test_user_can_follow_at_author(self):
+        follows_count = Follow.objects.filter(
+            user=ViewsTest.other_user
+        ).count()
+        response = self.other_client.get(
+            reverse('posts:profile_follow', args=[ViewsTest.user.username])
+        )
+        self.assertRedirects(
+            response,
+            reverse('posts:profile', args=[ViewsTest.user.username])
+        )
+        self.assertEqual(
+            Follow.objects.filter(user=ViewsTest.other_user).count(),
+            follows_count + 1
+        )
+
+    def test_user_can_unfollow_from_author(self):
+        follows_count = Follow.objects.filter(
+            user=ViewsTest.user
+        ).count()
+        response = self.client.get(
+            reverse(
+                'posts:profile_unfollow',
+                args=[ViewsTest.other_user.username]
+            )
+        )
+        self.assertRedirects(
+            response,
+            reverse('posts:profile', args=[ViewsTest.other_user.username])
+        )
+        self.assertEqual(
+            Follow.objects.filter(user=ViewsTest.user).count(),
+            follows_count - 1
+        )
+
+    def test_user_nocan_follow_at_self(self):
+        follows_count = Follow.objects.filter(
+            user=ViewsTest.user
+        ).count()
+        response = self.client.get(
+            reverse('posts:profile_follow', args=[ViewsTest.user.username])
+        )
+        self.assertRedirects(
+            response,
+            reverse('posts:profile', args=[ViewsTest.user.username])
+        )
+        self.assertEqual(
+            Follow.objects.filter(user=ViewsTest.user).count(),
+            follows_count
+        )

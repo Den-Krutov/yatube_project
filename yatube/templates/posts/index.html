@@ -5,8 +5,11 @@
   <h1>Это главная страница проекта Yatube</h1>
 {% endblock header %}
 {% block content %}
-  {% for post in page_obj %}
-    {% include 'posts/includes/post.html' %}
-  {% endfor %}
-  {% include 'posts/includes/paginator.html' %}
+  {% load cache %}
+  {% cache cache_page_timeout index_page page_obj.number%}
+    {% for post in page_obj %}
+      {% include 'posts/includes/post.html' %}
+    {% endfor %}
+    {% include 'posts/includes/paginator.html' %}
+  {% endcache %}
 {% endblock %}
